@@ -1,0 +1,98 @@
+version: '3.8'
+
+services:
+  mysql-agendamento:
+    image: mysql:8.0
+    environment:
+      MYSQL_DATABASE: db_agendamento
+      MYSQL_ROOT_PASSWORD: admin
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-agendamento-data:/var/lib/mysql
+
+  mysql-clinica:
+    image: mysql:8.0
+    environment:
+      MYSQL_DATABASE: db_clinica
+      MYSQL_ROOT_PASSWORD: admin
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql-clinica-data:/var/lib/mysql
+
+  mysql-procedimento:
+    image: mysql:8.0
+    environment:
+      MYSQL_DATABASE: db_procedimento
+      MYSQL_ROOT_PASSWORD: admin
+    ports:
+      - "3308:3306"
+    volumes:
+      - mysql-procedimento-data:/var/lib/mysql
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: admin123
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+
+  agendamento-service:
+    build: ./agendamento-service
+    container_name: agendamento-service
+    ports:
+      - "8081:8081"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-agendamento:3306/db_agendamento
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: admin
+      SPRING_RABBITMQ_HOST: rabbitmq
+    depends_on:
+      mysql-agendamento:
+        condition: service_started
+      rabbitmq:
+        condition: service_started
+
+  clinica-service:
+    build: ./clinica-service
+    container_name: clinica-service
+    ports:
+      - "8082:8082"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-clinica:3306/db_clinica
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: admin
+      SPRING_RABBITMQ_HOST: rabbitmq
+    depends_on:
+      mysql-clinica:
+        condition: service_started
+      rabbitmq:
+        condition: service_started
+
+  procedimento-service:
+    build: ./procedimento-service
+    container_name: procedimento-service
+    ports:
+      - "8083:8083"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-procedimento:3306/db_procedimento
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: admin
+      SPRING_RABBITMQ_HOST: rabbitmq
+    depends_on:
+      mysql-procedimento:
+        condition: service_started
+      rabbitmq:
+        condition: service_started
+
+
+volumes:
+  mysql-agendamento-data:
+  mysql-clinica-data:
+  mysql-procedimento-data:
+  rabbitmq-data:

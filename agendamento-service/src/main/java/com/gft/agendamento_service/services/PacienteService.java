@@ -1,10 +1,12 @@
 package com.gft.agendamento_service.services;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 
+import com.gft.agendamento_service.dtos.PacienteResponse;
 import com.gft.agendamento_service.models.Paciente;
 import com.gft.agendamento_service.repositories.PacienteRepository;
 
@@ -17,42 +19,61 @@ public class PacienteService {
         this.pacienteRepository = pacienteRepository;
     }
 
-    public Paciente create(Paciente paciente) {
-        Paciente newPaciente = pacienteRepository.save(paciente);
+    private PacienteResponse toPacienteResponse(Paciente paciente) {
+        
+        PacienteResponse pacienteResponse = new PacienteResponse(
+            paciente.getNome(),
+            paciente.getIdade(),
+            paciente.getSexo()
+        );
+
+        return pacienteResponse;
+    }
+
+    public Paciente createPaciente(Paciente paciente) {
+        Paciente newPaciente = this.pacienteRepository.save(paciente);
 
         return newPaciente;
     }
 
-    public Paciente update(Paciente newPaciente, UUID id) {
-        Paciente updatedPaciente = pacienteRepository.findById(id)
-                .map(p -> {
-                    p.setCpf(newPaciente.getCpf());
-                    p.setNome(newPaciente.getNome());
-                    p.setIdade(newPaciente.getIdade());
-                    p.setSexo(newPaciente.getSexo());
-                    return pacienteRepository.save(p);
-                }).orElse(null);
-        return updatedPaciente;
-    }
-
     public List<Paciente> findAll() {
-        return pacienteRepository.findAll();
+        return this.pacienteRepository.findAll();
     }
 
-    public Paciente findById(UUID id) {
-        return pacienteRepository.findById(id).orElse(null);
+    public Paciente findPacienteById(UUID id) {
+        Optional<Paciente> paciente = this.pacienteRepository.findById(id);
+
+        return paciente.orElse(null);
+    }
+
+    public PacienteResponse findResponseById(UUID id) {
+        Paciente paciente = this.findPacienteById(id);
+        PacienteResponse pacienteResponse = toPacienteResponse(paciente);
+
+        return pacienteResponse;
     }
 
     public Paciente findByCpf(String cpf) {
-        return pacienteRepository.findByCpf(cpf);
+        Optional<Paciente> paciente = this.pacienteRepository.findByCpf(cpf);
+
+        return paciente.orElse(null);
     }
 
-    public Boolean delete(UUID id) {
-        if (pacienteRepository.existsById(id)) {
-            pacienteRepository.deleteById(id);
-            return true;
-        }
-        return false;
+    public Paciente updatePaciente(Paciente newPaciente, UUID id) {
+        Paciente updatedPaciente = this.findPacienteById(id);
+
+        updatedPaciente.setCpf(newPaciente.getCpf());
+        updatedPaciente.setNome(newPaciente.getNome());
+        updatedPaciente.setIdade(newPaciente.getIdade());
+        updatedPaciente.setSexo(newPaciente.getSexo());
+
+        return this.pacienteRepository.save(updatedPaciente);
+    }
+
+    public void deletePaciente(UUID id) {
+        this.findPacienteById(id);
+
+        this.pacienteRepository.deleteById(id);
     }
 
 }

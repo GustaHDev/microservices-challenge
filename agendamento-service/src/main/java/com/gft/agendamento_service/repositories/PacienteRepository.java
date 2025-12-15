@@ -1,5 +1,6 @@
 package com.gft.agendamento_service.repositories;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -10,4 +11,6 @@ import com.gft.agendamento_service.models.Paciente;
 
 public interface PacienteRepository extends JpaRepository<Paciente, UUID> {
     Optional<Paciente> findByCpf(String cpf);
+
+    Optional<List<Paciente>> findByName(String nome);
 }

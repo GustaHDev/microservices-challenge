@@ -59,6 +59,13 @@ public class PacienteService {
         return paciente.orElse(null);
     }
 
+    public List<Paciente> findByName(String nome) {
+        String nomeCase = nome.toLowerCase();
+        Optional<List<Paciente>> pacientes = this.pacienteRepository.findByName(nomeCase);
+
+        return pacientes.orElse(null);
+    }
+
     public Paciente updatePaciente(Paciente newPaciente, UUID id) {
         Paciente updatedPaciente = this.findPacienteById(id);
 

@@ -15,12 +15,15 @@ import com.gft.agendamento_service.models.Paciente;
 import com.gft.agendamento_service.models.Paciente.CreatePaciente;
 import com.gft.agendamento_service.models.Paciente.UpdatePaciente;
 import com.gft.agendamento_service.services.PacienteService;
+
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+
+
 
 
 @RestController
@@ -57,6 +60,22 @@ public class PacienteController {
 
         return ResponseEntity.ok().body(pacienteResponse);
     }
+
+    @GetMapping("/paciente/{cpf}")
+    public ResponseEntity<Paciente> getPacienteByCpf(@PathVariable String cpf) {
+        Paciente paciente = this.pacienteService.findByCpf(cpf);
+
+        return ResponseEntity.ok().body(paciente);
+    }
+
+    @GetMapping("/paciente/{nome}")
+    public ResponseEntity<List<Paciente>> getPacienteByName(@PathVariable String nome) {
+        List<Paciente> pacientes = this.pacienteService.findByName(nome);
+
+        return ResponseEntity.ok().body(pacientes);
+    }
+    
+    
 
     @PutMapping("/paciente/{id}")
     public ResponseEntity<Void> updatePaciente(@Validated(UpdatePaciente.class) @PathVariable UUID id, @RequestBody Paciente paciente) {

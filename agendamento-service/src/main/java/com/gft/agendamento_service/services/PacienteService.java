@@ -61,7 +61,7 @@ public class PacienteService {
 
     public List<Paciente> findByName(String nome) {
         String nomeCase = nome.toLowerCase();
-        Optional<List<Paciente>> pacientes = this.pacienteRepository.findByName(nomeCase);
+        Optional<List<Paciente>> pacientes = this.pacienteRepository.findByNome(nomeCase);
 
         return pacientes.orElse(null);
     }

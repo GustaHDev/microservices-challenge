@@ -8,10 +8,11 @@ import java.util.UUID;
 import org.springframework.stereotype.Service;
 
 import com.gft.clinica_service.client.AgendamentoClient;
+import com.gft.clinica_service.client.ProcedimentoClient;
 import com.gft.clinica_service.dtos.AgendaRequest;
 import com.gft.clinica_service.dtos.ConsultaDTO;
 import com.gft.clinica_service.dtos.ConsultaRequest;
-import com.gft.clinica_service.dtos.ExameRequest;
+import com.gft.clinica_service.dtos.ProcedimentoRequest;
 import com.gft.clinica_service.dtos.MessageResponse;
 import com.gft.clinica_service.dtos.PacienteResponse;
 import com.gft.clinica_service.models.Complexidade;
@@ -20,24 +21,34 @@ import com.gft.clinica_service.models.Medico;
 import com.gft.clinica_service.models.Prioridade;
 import com.gft.clinica_service.models.Sintoma;
 import com.gft.clinica_service.models.Status;
+import com.gft.clinica_service.publishers.ConsultaPublisher;
 import com.gft.clinica_service.repositories.ConsultaRepository;
 
 @Service
 public class ConsultaService {
 
     private final ConsultaRepository consultaRepository;
+
     private final MedicoService medicoService;
     private final SintomaService sintomaService;
+
     private final AgendamentoClient agendamentoClient;
+    private final ProcedimentoClient procedimentoClient;
+
+    private final ConsultaPublisher consultaPublisher;
 
     ConsultaService(ConsultaRepository consultaRepository,
             MedicoService medicoService,
             AgendamentoClient agendamentoClient,
-            SintomaService sintomaService) {
+            SintomaService sintomaService,
+            ProcedimentoClient procedimentoClient,
+            ConsultaPublisher consultaPublisher) {
         this.consultaRepository = consultaRepository;
         this.medicoService = medicoService;
         this.agendamentoClient = agendamentoClient;
         this.sintomaService = sintomaService;
+        this.procedimentoClient = procedimentoClient;
+        this.consultaPublisher = consultaPublisher;
     }
 
     private Complexidade determinarComplexidade(List<Sintoma> sintomas) {
@@ -147,6 +158,7 @@ public class ConsultaService {
             throw new IllegalArgumentException("É necessário informar Código OU Horário da consulta.");
         }
 
+        
         PacienteResponse paciente = this.getPacienteByCpf(newConsulta.getCpfPaciente());
 
         List<Sintoma> sintomas = this.sintomaService.findSintomaByName(newConsulta.getSintomas());
@@ -156,9 +168,20 @@ public class ConsultaService {
         updatedConsulta.setCpfPaciente(paciente.getCpf());
         updatedConsulta.setSintomas(newConsulta.getSintomas());
         updatedConsulta.setComplexidade(complexidade);
-        updatedConsulta.setStatus(Status.EM_ATENDIMENTO);
+        
+        updatedConsulta.setStatus(Status.FINALIZADO);
+
+        this.consultaPublisher.publishConsultaFinalizada(updatedConsulta.getId());
 
         return this.consultaRepository.save(updatedConsulta);
+    }
+
+    public void cancelarConsulta(UUID id) {
+        Consulta consulta = this.findConsultaById(id);
+
+        consulta.setStatus(Status.CANCELADO);
+
+        this.consultaRepository.save(consulta);
     }
 
     public void deleteConsultaById(UUID id) {
@@ -167,8 +190,16 @@ public class ConsultaService {
         this.consultaRepository.deleteById(id);
     }
 
-    // public MessageResponse setExameAltaComplexidade(ExameRequest request) {
-    //     PacienteResponse paciente = this.getPacienteByCpf(request.getCpfPaciente());
-    // }
+    public MessageResponse setExameAltaComplexidade(ProcedimentoRequest request) {
+        PacienteResponse paciente = this.getPacienteByCpf(request.getCpfPaciente());
+
+        UUID codigoExame = this.procedimentoClient.createProcedimento(request);
+
+        MessageResponse procedimentoResponse = new MessageResponse();
+        procedimentoResponse.setCodigo(codigoExame);
+        procedimentoResponse.setMessage("Exame registrado sobre o CPF: " + paciente.getCpf() + ", por favor, agendar horário no sistema.");
+
+        return procedimentoResponse;
+    }
 
 }

@@ -1,6 +1,6 @@
 package com.gft.clinica_service.dtos;
 
-import java.util.UUID;
+import com.gft.clinica_service.models.Prioridade;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -9,14 +9,16 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Builder
-@AllArgsConstructor
 @NoArgsConstructor
+@AllArgsConstructor
 @Getter
 @Setter
-public class MessageResponse {
+public class ProcedimentoRequest {
 
-    private String message;
+    private String cpfPaciente;
 
-    private UUID codigo;
+    private String tipoProcedimento;
+
+    private Prioridade prioridade;
 
 }

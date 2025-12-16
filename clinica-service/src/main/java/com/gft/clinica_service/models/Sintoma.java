@@ -3,14 +3,15 @@ package com.gft.clinica_service.models;
 import java.util.List;
 import java.util.UUID;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.ManyToMany;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -44,8 +45,12 @@ public class Sintoma {
     @Column(nullable = false)
     private Prioridade prioridade;
 
-    @ManyToMany(mappedBy = "sintomas")
-    @JsonIgnore
+    @ElementCollection
+    @CollectionTable(
+        name = "sintoma_doenca",
+        joinColumns = @JoinColumn(name = "sintoma_id")
+    )
+    @Column
     private List<String> doencas;
 
 }

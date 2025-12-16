@@ -12,5 +12,5 @@ import com.gft.agendamento_service.models.Paciente;
 public interface PacienteRepository extends JpaRepository<Paciente, UUID> {
     Optional<Paciente> findByCpf(String cpf);
 
-    Optional<List<Paciente>> findByName(String nome);
+    Optional<List<Paciente>> findByNome(String nome);
 }

@@ -23,9 +23,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 
-
-
-
 @RestController
 @RequestMapping("/api")
 @Validated
@@ -74,17 +71,16 @@ public class PacienteController {
 
         return ResponseEntity.ok().body(pacientes);
     }
-    
-    
 
     @PutMapping("/paciente/{id}")
-    public ResponseEntity<Void> updatePaciente(@Validated(UpdatePaciente.class) @PathVariable UUID id, @RequestBody Paciente paciente) {
+    public ResponseEntity<Void> updatePaciente(@Validated(UpdatePaciente.class) @PathVariable UUID id,
+            @RequestBody Paciente paciente) {
         paciente.setId(id);
         this.pacienteService.updatePaciente(paciente, id);
-        
+
         return ResponseEntity.noContent().build();
     }
-    
+
     @DeleteMapping("/paciente/{id}")
     public ResponseEntity<Void> deletePaciente(@PathVariable UUID id) {
         this.pacienteService.deletePaciente(id);

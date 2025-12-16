@@ -6,46 +6,61 @@ import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 
-import com.gft.agendamento_service.dtos.ConsultaResponse;
+import com.gft.agendamento_service.client.ClinicaClient;
+import com.gft.agendamento_service.dtos.ConsultaRequest;
+import com.gft.agendamento_service.dtos.MessageResponse;
 import com.gft.agendamento_service.models.ConsultaAgendada;
 import com.gft.agendamento_service.models.Paciente;
 import com.gft.agendamento_service.models.Status;
+import com.gft.agendamento_service.publishers.ConsultaPublisher;
 import com.gft.agendamento_service.repositories.ConsultaRepository;
 
 @Service
 public class ConsultaService {
     private final ConsultaRepository consultaRepository;
+
     private final PacienteService pacienteService;
 
-    ConsultaService(ConsultaRepository consultaRepository, PacienteService pacienteService) {
+    private final ConsultaPublisher consultaPublisher;
+
+    private final ClinicaClient clinicaClient;
+
+    ConsultaService(ConsultaRepository consultaRepository, 
+                    PacienteService pacienteService, 
+                    ConsultaPublisher consultaPublisher,
+                    ClinicaClient clinicaClient) {
         this.consultaRepository = consultaRepository;
         this.pacienteService = pacienteService;
+        this.consultaPublisher = consultaPublisher;
+        this.clinicaClient = clinicaClient;
     }
 
-    private ConsultaResponse toConsultaResponse(ConsultaAgendada consultaAgendada) {
-
-        ConsultaResponse consultaResponse = new ConsultaResponse(
-                consultaAgendada.getEspecialidadeMed(),
-                consultaAgendada.getPaciente().getNome(),
-                consultaAgendada.getDataHora(),
-                consultaAgendada.getId());
-
-        return consultaResponse;
-    }
-
-    public ConsultaResponse createConsulta(ConsultaAgendada consulta) {
+    public MessageResponse createConsulta(ConsultaAgendada consulta) {
         Paciente paciente = pacienteService.findByCpf(consulta.getPaciente().getCpf());
 
+        
+        ConsultaRequest request = new ConsultaRequest(
+            paciente.getCpf(),
+            consulta.getEspecialidadeMed(),
+            consulta.getDataHora()
+        );
+        
         ConsultaAgendada newConsulta = new ConsultaAgendada();
+        newConsulta.setStatus(Status.AGUARDANDO_CONFIRMACAO);
 
+        UUID codigoConsulta = this.clinicaClient.createConsulta(request);
+
+        newConsulta.setStatus(Status.AGENDADO);
         newConsulta.setPaciente(paciente);
         newConsulta.setDataHora(consulta.getDataHora());
         newConsulta.setEspecialidadeMed(consulta.getEspecialidadeMed());
-        newConsulta.setStatus(Status.AGUARDANDO_CONFIRMACAO);
 
         this.consultaRepository.save(newConsulta);
 
-        ConsultaResponse consultaResponse = toConsultaResponse(newConsulta);
+        MessageResponse consultaResponse = new MessageResponse();
+        consultaResponse.setMessage("a consulta de " + paciente.getNome() + " foi marcada com sucesso para " + newConsulta.getEspecialidadeMed() + " na data " + newConsulta.getDataHora());
+        consultaResponse.setCodigo(codigoConsulta);
+
 
         return consultaResponse;
     }
@@ -58,13 +73,6 @@ public class ConsultaService {
         Optional<ConsultaAgendada> consulta = this.consultaRepository.findById(id);
 
         return consulta.orElse(null);
-    }
-
-    public ConsultaResponse findResponseById(UUID id) {
-        ConsultaAgendada consulta = this.findConsultaById(id);
-        ConsultaResponse consultaResponse = toConsultaResponse(consulta);
-
-        return consultaResponse;
     }
 
     public List<ConsultaAgendada> findByPacienteCpf(String cpf) {
@@ -84,9 +92,18 @@ public class ConsultaService {
         return this.consultaRepository.save(updatedConsulta);
     }
 
+    public void finalizarConsulta(UUID consultaId) {
+        ConsultaAgendada consulta = this.findConsultaById(consultaId);
+
+        consulta.setStatus(Status.FINALIZADO);
+
+        this.consultaRepository.save(consulta);
+    }
+
     public void deleteConsulta(UUID id) {
         this.findConsultaById(id);
 
+        this.consultaPublisher.publishConsultaCancelada(id);
         this.consultaRepository.deleteById(id);
     }
 

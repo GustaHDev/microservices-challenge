@@ -1,4 +1,4 @@
-package com.gft.clinica_service.dtos;
+package com.gft.agendamento_service.dtos;
 
 import java.util.UUID;
 
@@ -16,7 +16,6 @@ import lombok.Setter;
 public class MessageResponse {
 
     private String message;
-
     private UUID codigo;
 
 }

@@ -1,4 +1,4 @@
-package com.gft.agendamento_service.models;
+package com.gft.procedimento_service.models;
 
 public enum Status {
 
@@ -6,5 +6,5 @@ public enum Status {
     AGENDADO,
     CANCELADO,
     FINALIZADO
-
+    
 }

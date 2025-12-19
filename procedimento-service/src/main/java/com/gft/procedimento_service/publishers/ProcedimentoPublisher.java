@@ -1,10 +1,11 @@
 package com.gft.procedimento_service.publishers;
 
-import java.util.Map;
 import java.util.UUID;
 
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Component;
+
+import com.gft.procedimento_service.dtos.FinishEvent;
 
 @Component
 public class ProcedimentoPublisher {
@@ -16,9 +17,9 @@ public class ProcedimentoPublisher {
     }
 
     public void publishProcedimentoFinalizado(UUID procedimentoId) {
-        Map<String, Object> payload = Map.of("procedimentoId", procedimentoId);
+        FinishEvent event = new FinishEvent(procedimentoId);
 
-        this.template.convertAndSend("exchange.procedimentos", "procedimento.finalizado", payload);
+        this.template.convertAndSend("exchange.procedimentos", "procedimento.finalizado", event);
     }
 
 }

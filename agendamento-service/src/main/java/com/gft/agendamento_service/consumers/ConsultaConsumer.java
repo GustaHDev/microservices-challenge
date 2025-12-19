@@ -1,10 +1,10 @@
 package com.gft.agendamento_service.consumers;
 
-import java.util.UUID;
 
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Component;
 
+import com.gft.agendamento_service.dtos.FinishEvent;
 import com.gft.agendamento_service.services.ConsultaService;
 
 @Component
@@ -17,8 +17,8 @@ public class ConsultaConsumer {
     }
 
     @RabbitListener(queues = "consulta.finalizada.queue")
-    public void onConsultaFinalizada(UUID consultaId) {
-        this.consultaService.finalizarConsulta(consultaId);
+    public void onConsultaFinalizada(FinishEvent event) {
+        this.consultaService.finalizarConsulta(event.getId());
     }
 
 }

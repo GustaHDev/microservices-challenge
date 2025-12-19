@@ -24,7 +24,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/procedimento")
 @Validated
 public class ProcedimentoController {
     private final ProcedimentoService procedimentoService;
@@ -43,21 +43,21 @@ public class ProcedimentoController {
         return ResponseEntity.created(uri).body(procedimento.getId());
     }
 
-    @GetMapping("/procedimento/{id}")
+    @GetMapping("/{id}")
     public ResponseEntity<Procedimento> findProcedimentoById(@PathVariable UUID id) {
         Procedimento procedimento = this.procedimentoService.findById(id);
 
         return ResponseEntity.ok().body(procedimento);
     }
 
-    @GetMapping("/procedimento/{cpf}")
+    @GetMapping("/cpf/{cpf}")
     public ResponseEntity<Procedimento> findProcedimentoByPacienteCpf(@PathVariable String cpf) {
         Procedimento procedimento = this.procedimentoService.findByPacienteCpf(cpf);
 
         return ResponseEntity.ok().body(procedimento);
     }
 
-    @GetMapping("/procedimento/{dataHora}")
+    @GetMapping("/{dataHora}")
     public ResponseEntity<List<Procedimento>> findProcedimentoByHorario(@PathVariable LocalDateTime dataHora) {
         List<Procedimento> procedimentos = this.procedimentoService.findByDataHora(dataHora);
 
@@ -78,7 +78,7 @@ public class ProcedimentoController {
         return ResponseEntity.noContent().build();
     }
 
-    @DeleteMapping("/procedimento/{id}")
+    @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteProcedimento(@PathVariable UUID id) {
         Procedimento procedimento = this.procedimentoService.findById(id);
 

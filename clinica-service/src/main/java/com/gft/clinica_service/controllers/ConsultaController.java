@@ -1,6 +1,7 @@
 package com.gft.clinica_service.controllers;
 
 import java.net.URI;
+import java.util.List;
 import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
@@ -11,6 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import com.gft.clinica_service.dtos.AgendaRequest;
+import com.gft.clinica_service.dtos.ConsultaDTO;
 import com.gft.clinica_service.dtos.ConsultaRequest;
 import com.gft.clinica_service.dtos.MessageResponse;
 import com.gft.clinica_service.dtos.ProcedimentoRequest;
@@ -22,9 +24,11 @@ import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/clinica")
 @Validated
 public class ConsultaController {
 
@@ -44,18 +48,26 @@ public class ConsultaController {
         return ResponseEntity.created(uri).body(consulta.getId());
     }
 
-    @PutMapping("clinica/AtenderConsulta")
+    @PutMapping("/AtenderConsulta")
     public ResponseEntity<Void> updateConsulta(@RequestBody ConsultaRequest request) {
         this.consultaService.updateConsulta(request);
 
         return ResponseEntity.noContent().build();
     }
 
-    @PostMapping("/clinica/cadastro/procedimento")
+    @PostMapping("/cadastro/procedimento")
     public ResponseEntity<MessageResponse> cadastrarExameAltaComplexidade(@RequestBody ProcedimentoRequest request) {
         MessageResponse response = this.consultaService.setExameAltaComplexidade(request);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
+
+    @GetMapping("/consultas")
+    public ResponseEntity<List<ConsultaDTO>> findConsultas() {
+        List<ConsultaDTO> consultas = this.consultaService.findConsultas();
+
+        return ResponseEntity.ok().body(consultas);
+    }
+    
 
 }

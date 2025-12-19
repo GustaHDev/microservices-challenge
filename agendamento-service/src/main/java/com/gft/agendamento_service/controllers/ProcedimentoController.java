@@ -22,7 +22,7 @@ import com.gft.agendamento_service.models.ProcedimentoAgendado.UpdateProcediment
 import com.gft.agendamento_service.services.ProcedimentoService;
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/agendamento")
 @Validated
 public class ProcedimentoController {
 

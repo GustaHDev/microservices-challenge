@@ -1,6 +1,18 @@
 version: '3.8'
 
 services:
+
+  mysql-keycloak:
+    image: mysql:8
+    environment:
+      MYSQL_DATABASE: db_keycloak
+      MYSQL_ROOT_PASSWORD: admin
+      MYSQL_ROOT_HOST: '%'
+    ports:
+      - "3309:3306"
+    volumes:
+      - mysql-keycloak-data:/var/lib/mysql
+
   mysql-agendamento:
     image: mysql:8.0
     environment:
@@ -41,6 +53,45 @@ services:
       RABBITMQ_DEFAULT_PASS: admin123
     volumes:
       - rabbitmq-data:/var/lib/rabbitmq
+  
+  keycloak:
+    image: quay.io/keycloak/keycloak:25.0.2
+    container_name: keycloak
+    command: start --http-enabled=true --hostname-strict=false
+    ports:
+      - "8084:8080"
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin123
+
+      KC_HTTP_ENABLED: true
+      KC_PROXY: edge
+
+      KC_HOSTNAME_STRICT: false
+      KC_HOSTNAME_STRICT_HTTPS: false
+
+      KC_DB: mysql
+      
+      # Configuração explícita do banco (mais seguro que URL inteira)
+      KC_DB_URL_HOST: mysql-keycloak
+      KC_DB_URL_DATABASE: db_keycloak
+      KC_DB_URL_PORT: 3306
+      KC_DB_USERNAME: root
+      KC_DB_PASSWORD: admin
+
+    depends_on:
+      mysql-keycloak:
+        condition: service_started
+
+
+  api-gateway:
+    build: ./api-gateway
+    container_name: api-gateway
+    ports:
+      - "8080:8080"
+    depends_on:
+      keycloak:
+        condition: service_started
 
   agendamento-service:
     build: ./agendamento-service
@@ -92,6 +143,7 @@ services:
 
 
 volumes:
+  mysql-keycloak-data:
   mysql-agendamento-data:
   mysql-clinica-data:
   mysql-procedimento-data:

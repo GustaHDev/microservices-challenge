@@ -1,10 +1,11 @@
 package com.gft.clinica_service.publishers;
 
-import java.util.Map;
 import java.util.UUID;
 
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Component;
+
+import com.gft.clinica_service.dtos.FinishEvent;
 
 @Component
 public class ConsultaPublisher {
@@ -16,9 +17,9 @@ public class ConsultaPublisher {
     }
 
     public void publishConsultaFinalizada(UUID consultaId) {
-        Map<String, Object> payload = Map.of("consultaId", consultaId);
+        FinishEvent event = new FinishEvent(consultaId);
 
-        template.convertAndSend("exchange.consultas", "consulta.finalizada", payload);
+        template.convertAndSend("exchange.consultas", "consulta.finalizada", event);
     }
 
 }

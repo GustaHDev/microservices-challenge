@@ -24,7 +24,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/agendamento")
 @Validated
 public class PacienteController {
 
@@ -58,7 +58,7 @@ public class PacienteController {
         return ResponseEntity.ok().body(pacienteResponse);
     }
 
-    @GetMapping("/paciente/{cpf}")
+    @GetMapping("/paciente/cpf/{cpf}")
     public ResponseEntity<Paciente> getPacienteByCpf(@PathVariable String cpf) {
         Paciente paciente = this.pacienteService.findByCpf(cpf);
 

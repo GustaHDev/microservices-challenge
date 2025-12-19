@@ -22,7 +22,7 @@ import com.gft.clinica_service.services.SintomaService;
 import jakarta.validation.Valid;
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/clinica")
 @Validated
 public class SintomaController {
 

@@ -9,7 +9,7 @@ import com.gft.clinica_service.dtos.PacienteResponse;
 @FeignClient(name = "agendamento-service", url = "http://agendamento-service:8081")
 public interface AgendamentoClient {
 
-    @GetMapping("/api/paciente/{cpf}")
+    @GetMapping("/api/paciente/cpf/{cpf}")
     PacienteResponse getPacienteByCpf(@PathVariable String cpf);
 
     @GetMapping("/api/paciente/{nome}")

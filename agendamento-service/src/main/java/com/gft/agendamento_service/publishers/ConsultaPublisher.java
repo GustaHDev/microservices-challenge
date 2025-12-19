@@ -1,10 +1,11 @@
 package com.gft.agendamento_service.publishers;
 
-import java.util.Map;
 import java.util.UUID;
 
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Component;
+
+import com.gft.agendamento_service.dtos.CancelEvent;
 
 @Component
 public class ConsultaPublisher {
@@ -16,9 +17,9 @@ public class ConsultaPublisher {
     }
 
     public void publishConsultaCancelada(UUID consultaId) {
-        Map<String, Object> payload = Map.of("consultaId", consultaId);
+        CancelEvent event = new CancelEvent(consultaId);
 
-        template.convertAndSend("exchange.consultas", "consulta.cancelada", payload);
+        template.convertAndSend("exchange.consultas", "consulta.cancelada", event);
     }
 
 }

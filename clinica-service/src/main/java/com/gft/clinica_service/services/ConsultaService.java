@@ -13,7 +13,7 @@ import com.gft.clinica_service.dtos.ConsultaDTO;
 import com.gft.clinica_service.dtos.ConsultaRequest;
 import com.gft.clinica_service.dtos.ConsultaResponse;
 import com.gft.clinica_service.dtos.ProcedimentoRequest;
-import com.gft.clinica_service.exceptions.BusinessException;
+import com.gft.clinica_service.exceptions.ApiIntegrationException;
 import com.gft.clinica_service.exceptions.ResourceNotFoundException;
 import com.gft.clinica_service.dtos.MessageResponse;
 import com.gft.clinica_service.dtos.PacienteResponse;
@@ -88,11 +88,19 @@ public class ConsultaService {
     }
 
     public PacienteResponse getPacienteByCpf(String cpf) {
-        return agendamentoClient.getPacienteByCpf(cpf);
+        try {
+            return agendamentoClient.getPacienteByCpf(cpf);
+        } catch (Exception e) {
+            throw new ApiIntegrationException("Erro ao integrar com serviço de agendamento. " + e.getMessage(), e);
+        }
     }
 
     public PacienteResponse getPacienteByNome(String nome) {
-        return agendamentoClient.getPacienteByNome(nome);
+        try {
+            return agendamentoClient.getPacienteByNome(nome);
+        } catch (Exception e) {
+            throw new ApiIntegrationException("Erro ao integrar com serviço de agendamento. " + e.getMessage(), e);
+        }
     }
 
     // UTILIZADO QUANDO CONSULTA FOR AGENDADA
@@ -100,15 +108,6 @@ public class ConsultaService {
         Consulta newConsulta = new Consulta();
 
         Medico medico = medicoService.findMedicoByEspecialidade(request.getEspecialidadeMed()).getFirst();
-
-        ConsultaDTO consultaExists = this.findConsultasByCrm(medico.getCrm()).stream()
-                .filter(c -> c.getDataHora().equals(request.getDataHora()))
-                .findFirst()
-                .orElse(null);
-
-        if (consultaExists != null) {
-            throw new BusinessException("Consulta já agendada para este médico e horário.");
-        }
 
         newConsulta.setCodigoAgendamento(request.getCodigoAgendamento());
         newConsulta.setCpfPaciente(request.getCpfPaciente());
@@ -205,7 +204,8 @@ public class ConsultaService {
     }
 
     public void cancelarConsulta(UUID id) {
-        Consulta consulta = this.consultaRepository.findByCodigoAgendamento(id).orElseThrow(() -> new ResourceNotFoundException("Não foi possível encontrar a consulta. ID agendamento: " + id));
+        Consulta consulta = this.consultaRepository.findByCodigoAgendamento(id).orElseThrow(
+                () -> new ResourceNotFoundException("Não foi possível encontrar a consulta. ID agendamento: " + id));
 
         consulta.setStatus(Status.CANCELADO);
 
@@ -221,7 +221,12 @@ public class ConsultaService {
     public MessageResponse setExameAltaComplexidade(ProcedimentoRequest request) {
         PacienteResponse paciente = this.getPacienteByCpf(request.getCpfPaciente());
 
-        UUID codigoExame = this.procedimentoClient.createProcedimento(request);
+        UUID codigoExame;
+        try {
+            codigoExame = this.procedimentoClient.createProcedimento(request);
+        } catch (Exception e) {
+            throw new ApiIntegrationException("Erro ao integrar com serviço de procedimentos. " + e.getMessage(), e);
+        }
 
         MessageResponse procedimentoResponse = new MessageResponse();
         procedimentoResponse.setCodigo(codigoExame);

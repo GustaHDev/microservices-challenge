@@ -12,6 +12,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import com.gft.clinica_service.exceptions.ApiIntegrationException;
 import com.gft.clinica_service.exceptions.BusinessException;
 import com.gft.clinica_service.exceptions.ForbbidenException;
 import com.gft.clinica_service.exceptions.ResourceNotFoundException;
@@ -114,12 +115,26 @@ public class RestExceptionHandler {
 
     @ExceptionHandler(BusinessException.class)
     public ResponseEntity<ErrorResponse> handleBusinessException(BusinessException e, HttpServletRequest request) {
-        HttpStatus status = HttpStatus.BAD_REQUEST;
+        HttpStatus status = e.getStatus();
 
         ErrorResponse err = new ErrorResponse(
                 Instant.now(),
                 status.value(),
                 "Erro de negócio",
+                e.getMessage(),
+                request.getRequestURI());
+        return ResponseEntity.status(status).body(err);
+    }
+
+    @ExceptionHandler(ApiIntegrationException.class)
+    public ResponseEntity<ErrorResponse> handleApiIntegrationException(ApiIntegrationException e,
+            HttpServletRequest request) {
+        HttpStatus status = HttpStatus.SERVICE_UNAVAILABLE;
+
+        ErrorResponse err = new ErrorResponse(
+                Instant.now(),
+                status.value(),
+                "Erro de integração com API externa",
                 e.getMessage(),
                 request.getRequestURI());
         return ResponseEntity.status(status).body(err);

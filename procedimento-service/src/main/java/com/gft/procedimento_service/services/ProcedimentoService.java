@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import com.gft.procedimento_service.dtos.ExameRequest;
@@ -42,12 +43,7 @@ public class ProcedimentoService {
         procedimento.setComplexidade(this.definirComplexidade(procedimento.getTipoProcedimento()));
 
         if (procedimento.getComplexidade() == Complexidade.ALTA && origem == OrigemProcedimento.AGENDAMENTO) {
-            throw new BusinessException("Procedimentos de complexidade ALTA só podem ser marcados na clínica.");
-        }
-
-        boolean exists = this.procedimentoRepository.existsByTipoProcedimentoAndDataHora(procedimento.getTipoProcedimento(), procedimento.getDataHora());
-        if (exists && procedimento.getComplexidade() == Complexidade.BAIXA) {
-            throw new BusinessException("Já existe um procedimento do tipo " + procedimento.getTipoProcedimento() + " agendado para este horário.");
+            throw new BusinessException("Procedimentos de complexidade ALTA só podem ser marcados na clínica.", HttpStatus.BAD_REQUEST);
         }
 
         return this.procedimentoRepository.save(procedimento);

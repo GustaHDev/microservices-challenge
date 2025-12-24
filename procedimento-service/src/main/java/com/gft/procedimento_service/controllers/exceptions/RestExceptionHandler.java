@@ -114,7 +114,7 @@ public class RestExceptionHandler {
 
     @ExceptionHandler(BusinessException.class)
     public ResponseEntity<ErrorResponse> handleBusinessException(BusinessException e, HttpServletRequest request) {
-        HttpStatus status = HttpStatus.BAD_REQUEST;
+        HttpStatus status = e.geStatus();
 
         ErrorResponse err = new ErrorResponse(
                 Instant.now(),

@@ -18,4 +18,8 @@ public interface ConsultaRepository extends JpaRepository<Consulta, UUID> {
     List<Consulta> findByCrmMedico(String crmMedico);
 
     List<Consulta> findByCpfPaciente(String cpfPaciente);
+
+    boolean existsByDataHoraAndCrmMedico(LocalDateTime dataHora, String crmMedico);
+
+    boolean existsByDataHoraAndCpfPaciente(LocalDateTime dataHora, String cpfPaciente);
 }

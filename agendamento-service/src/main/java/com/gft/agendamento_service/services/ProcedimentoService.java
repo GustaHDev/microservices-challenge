@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import com.gft.agendamento_service.client.ProcedimentoClient;
 import com.gft.agendamento_service.dtos.MessageResponse;
 import com.gft.agendamento_service.dtos.ProcedimentoRequest;
+import com.gft.agendamento_service.exceptions.ApiIntegrationException;
 import com.gft.agendamento_service.exceptions.ResourceNotFoundException;
 import com.gft.agendamento_service.models.Paciente;
 import com.gft.agendamento_service.models.ProcedimentoAgendado;
@@ -56,7 +57,12 @@ public class ProcedimentoService {
         request.setTipoProcedimento(procedimento.getTipoExame());
         request.setDataHora(procedimento.getDataHora());
 
-        UUID codigoExame = this.procedimentoClient.createProcedimento(request, "AGENDAMENTO");
+        UUID codigoExame;
+        try {
+            codigoExame = this.procedimentoClient.createProcedimento(request, "AGENDAMENTO");
+        } catch (Exception e) {
+            throw new ApiIntegrationException("Erro ao integrar com serviço de procedimentos. " + e.getMessage(), e);
+        }
 
         savedProcedimento.setStatus(Status.AGENDADO);
         this.procedimentoRepository.save(savedProcedimento);

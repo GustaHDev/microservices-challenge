@@ -1,9 +1,18 @@
 package com.gft.clinica_service.exceptions;
 
+import org.springframework.http.HttpStatus;
+
 public class BusinessException extends RuntimeException {
 
-    public BusinessException(String message) {
+    private final HttpStatus status;
+
+    public BusinessException(String message, HttpStatus status) {
         super(message);
+        this.status = status;
+    }
+
+    public HttpStatus getStatus() {
+        return this.status;
     }
 
 }

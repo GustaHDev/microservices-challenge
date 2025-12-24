@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import com.gft.agendamento_service.client.ClinicaClient;
 import com.gft.agendamento_service.dtos.ConsultaRequest;
 import com.gft.agendamento_service.dtos.MessageResponse;
+import com.gft.agendamento_service.exceptions.ApiIntegrationException;
 import com.gft.agendamento_service.exceptions.ResourceNotFoundException;
 import com.gft.agendamento_service.models.ConsultaAgendada;
 import com.gft.agendamento_service.models.Paciente;
@@ -70,7 +71,7 @@ public class ConsultaService {
 
             return consultaResponse;
         } catch (Exception e) {
-            throw new ResourceNotFoundException("Erro ao agendar consulta na clínica externa: " + e.getMessage());
+            throw new ApiIntegrationException("Erro ao agendar consulta no serviço da clínica: " + e.getMessage(), e);
         }
 
     }

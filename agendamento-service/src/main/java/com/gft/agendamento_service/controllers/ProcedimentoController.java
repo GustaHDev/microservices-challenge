@@ -22,6 +22,10 @@ import com.gft.agendamento_service.models.ProcedimentoAgendado.CreateProcediment
 import com.gft.agendamento_service.models.ProcedimentoAgendado.UpdateProcedimento;
 import com.gft.agendamento_service.services.ProcedimentoService;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+
 @RestController
 @RequestMapping("/api/agendamento")
 @Validated
@@ -33,10 +37,18 @@ public class ProcedimentoController {
         this.procedimentoService = procedimentoService;
     }
 
+    @Operation(summary = "Agenda um procedimento", description = "Valida conflitos, envia para serviço de procedimentos para criar procedimento e retorna ID")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Procedimento criado"),
+            @ApiResponse(responseCode = "400", description = "Erro de validação"),
+            @ApiResponse(responseCode = "409", description = "Horário já ocupado"),
+            @ApiResponse(responseCode = "503", description = "Erro na comunicação com o centro cirúrgico"),
+            @ApiResponse(responseCode = "500", description = "Erro inesperado")
+    })
     @PostMapping("/cadastro/procedimento")
     public ResponseEntity<MessageResponse> createProcedimento(
             @Validated(CreateProcedimento.class) @RequestBody ProcedimentoAgendado procedimento) {
-        MessageResponse response =this.procedimentoService.createProcedimento(procedimento);
+        MessageResponse response = this.procedimentoService.createProcedimento(procedimento);
 
         URI uri = ServletUriComponentsBuilder.fromCurrentRequest()
                 .path("/{id}").buildAndExpand(procedimento.getId()).toUri();
@@ -44,6 +56,12 @@ public class ProcedimentoController {
         return ResponseEntity.created(uri).body(response);
     }
 
+    @Operation(summary = "Lista procedimentos", description = "Lista todos os procedimentos associados a um CPF")
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "Ok"),
+            @ApiResponse(responseCode = "404", description = "Cpf não encontrado"),
+            @ApiResponse(responseCode = "500", description = "Erro inesperado")
+    })
     @GetMapping("/procedimentos/{cpf}")
     public ResponseEntity<List<ProcedimentoAgendado>> getProcedimentos(@PathVariable String cpf) {
         List<ProcedimentoAgendado> procedimentos = this.procedimentoService.findByPacienteCpf(cpf);
@@ -51,6 +69,14 @@ public class ProcedimentoController {
         return ResponseEntity.ok().body(procedimentos);
     }
 
+    @Operation(summary = "Atualiza um procedimento", description = "Atualiza os dados de um procedimento pelo ID")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Procedimento atualizado"),
+            @ApiResponse(responseCode = "400", description = "Erro de validação"),
+            @ApiResponse(responseCode = "404", description = "ID não encontrado"),
+            @ApiResponse(responseCode = "409", description = "Horário já ocupado"),
+            @ApiResponse(responseCode = "500", description = "Erro inesperado")
+    })
     @PutMapping("/cadastro/procedimento/{id}")
     public ResponseEntity<Void> updateProcedimento(@Validated(UpdateProcedimento.class) @PathVariable UUID id,
             @RequestBody ProcedimentoAgendado newProcedimento) {
@@ -60,10 +86,16 @@ public class ProcedimentoController {
         return ResponseEntity.noContent().build();
     }
 
-    @DeleteMapping("/procedimento/{id}")
-    public ResponseEntity<Void> deleteProcedimento(@PathVariable UUID id) {
-        this.procedimentoService.deleteProcedimento(id);
-        return ResponseEntity.noContent().build();
-    }
-
+    @Operation(summary = "Deleta um procedimento", description = "Verifica se procedimento existe, deleta e envia mensagem para serviço de procedimentos para mudar status para CANCELADO")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Procedimento deletado"),
+            @ApiResponse(responseCode = "404", description = "Procedimento não encontrado"),
+            @ApiResponse(responseCode = "500", description = "Erro inesperado")
+        })
+        @DeleteMapping("/procedimento/{id}")
+        public ResponseEntity<Void> deleteProcedimento(@PathVariable UUID id) {
+            this.procedimentoService.deleteProcedimento(id);
+            return ResponseEntity.noContent().build();
+        }
+        
 }

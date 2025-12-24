@@ -4,12 +4,14 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import com.gft.agendamento_service.client.ProcedimentoClient;
 import com.gft.agendamento_service.dtos.MessageResponse;
 import com.gft.agendamento_service.dtos.ProcedimentoRequest;
 import com.gft.agendamento_service.exceptions.ApiIntegrationException;
+import com.gft.agendamento_service.exceptions.BusinessException;
 import com.gft.agendamento_service.exceptions.ResourceNotFoundException;
 import com.gft.agendamento_service.models.Paciente;
 import com.gft.agendamento_service.models.ProcedimentoAgendado;
@@ -42,6 +44,20 @@ public class ProcedimentoService {
         Optional<Paciente> paciente = pacienteRepository.findByCpf(procedimento.getPaciente().getCpf());
         if (!paciente.isPresent()) {
             throw new ResourceNotFoundException("Paciente não encontrado");
+        }
+
+        boolean existsByPacienteCpfAndDataHora = this.procedimentoRepository
+                .existsByPacienteCpfAndDataHora(paciente.get().getCpf(), procedimento.getDataHora());
+        boolean existsByTipoExameAndDataHora = this.procedimentoRepository
+                .existsByTipoExameAndDataHora(procedimento.getTipoExame(), procedimento.getDataHora());
+
+        if (existsByPacienteCpfAndDataHora) {
+            throw new BusinessException("Já existe uma consulta para este paciente no horário solicitado.",
+                    HttpStatus.CONFLICT);
+        }
+        if (existsByTipoExameAndDataHora) {
+            throw new BusinessException("Já existe uma consulta para este tipo de exame no horário solicitado.",
+                    HttpStatus.CONFLICT);
         }
 
         ProcedimentoAgendado newProcedimento = new ProcedimentoAgendado();
@@ -94,6 +110,20 @@ public class ProcedimentoService {
 
     public ProcedimentoAgendado updateProcedimento(ProcedimentoAgendado newProcedimento, UUID id) {
         ProcedimentoAgendado updatedProcedimento = this.findProcedimentoById(id);
+
+        boolean existsByPacienteCpfAndDataHora = this.procedimentoRepository
+                .existsByPacienteCpfAndDataHora(newProcedimento.getPaciente().getCpf(), newProcedimento.getDataHora());
+        boolean existsByTipoExameAndDataHora = this.procedimentoRepository
+                .existsByTipoExameAndDataHora(newProcedimento.getTipoExame(), newProcedimento.getDataHora());
+
+        if (existsByPacienteCpfAndDataHora) {
+            throw new BusinessException("Já existe uma consulta para este paciente no horário solicitado.",
+                    HttpStatus.CONFLICT);
+        }
+        if (existsByTipoExameAndDataHora) {
+            throw new BusinessException("Já existe uma consulta para este tipo de exame no horário solicitado.",
+                    HttpStatus.CONFLICT);
+        }
 
         updatedProcedimento.setPaciente(newProcedimento.getPaciente());
         updatedProcedimento.setDataHora(newProcedimento.getDataHora());

@@ -4,12 +4,14 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import com.gft.agendamento_service.client.ClinicaClient;
 import com.gft.agendamento_service.dtos.ConsultaRequest;
 import com.gft.agendamento_service.dtos.MessageResponse;
 import com.gft.agendamento_service.exceptions.ApiIntegrationException;
+import com.gft.agendamento_service.exceptions.BusinessException;
 import com.gft.agendamento_service.exceptions.ResourceNotFoundException;
 import com.gft.agendamento_service.models.ConsultaAgendada;
 import com.gft.agendamento_service.models.Paciente;
@@ -43,6 +45,20 @@ public class ConsultaService {
             throw new ResourceNotFoundException("Paciente não encontrado");
         }
 
+        boolean consultaExistsByPacienteCpf = this.consultaRepository
+                .existsByPacienteCpfAndDataHora(paciente.get().getCpf(), consulta.getDataHora());
+        boolean consultaExistsByEspecialidadeMed = this.consultaRepository
+                .existsByEspecialidadeMedAndDataHora(consulta.getEspecialidadeMed(), consulta.getDataHora());
+
+        if (consultaExistsByPacienteCpf) {
+            throw new BusinessException("Já existe uma consulta para este paciente no horário solicitado.",
+                    HttpStatus.CONFLICT);
+        }
+        if (consultaExistsByEspecialidadeMed) {
+            throw new BusinessException("Já existe uma consulta para esta especialidade no horário solicitado.",
+                    HttpStatus.CONFLICT);
+        }
+
         ConsultaAgendada newConsulta = new ConsultaAgendada();
         newConsulta.setPaciente(paciente.get());
         newConsulta.setDataHora(consulta.getDataHora());
@@ -52,11 +68,10 @@ public class ConsultaService {
         ConsultaAgendada savedConsulta = this.consultaRepository.save(newConsulta);
 
         ConsultaRequest request = new ConsultaRequest();
-            request.setCodigoAgendamento(savedConsulta.getId());
-            request.setCpfPaciente(paciente.get().getCpf());
-            request.setEspecialidadeMed(consulta.getEspecialidadeMed());
-            request.setDataHora(consulta.getDataHora());
-
+        request.setCodigoAgendamento(savedConsulta.getId());
+        request.setCpfPaciente(paciente.get().getCpf());
+        request.setEspecialidadeMed(consulta.getEspecialidadeMed());
+        request.setDataHora(consulta.getDataHora());
 
         try {
             UUID codigoConsulta = this.clinicaClient.createConsulta(request);
@@ -95,6 +110,20 @@ public class ConsultaService {
 
     public ConsultaAgendada updateConsulta(ConsultaAgendada newConsulta, UUID id) {
         ConsultaAgendada updatedConsulta = this.findConsultaById(id);
+
+        boolean consultaExistsByPacienteCpf = this.consultaRepository
+                .existsByPacienteCpfAndDataHora(newConsulta.getPaciente().getCpf(), newConsulta.getDataHora());
+        boolean consultaExistsByEspecialidadeMed = this.consultaRepository
+                .existsByEspecialidadeMedAndDataHora(newConsulta.getEspecialidadeMed(), newConsulta.getDataHora());
+
+        if (consultaExistsByPacienteCpf) {
+            throw new BusinessException("Já existe uma consulta para este paciente no horário solicitado.",
+                    HttpStatus.CONFLICT);
+        }
+        if (consultaExistsByEspecialidadeMed) {
+            throw new BusinessException("Já existe uma consulta para esta especialidade no horário solicitado.",
+                    HttpStatus.CONFLICT);
+        }
 
         updatedConsulta.setPaciente(newConsulta.getPaciente());
         updatedConsulta.setDataHora(newConsulta.getDataHora());

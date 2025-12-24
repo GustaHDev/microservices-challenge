@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import com.gft.agendamento_service.dtos.MessageResponse;
 import com.gft.agendamento_service.models.ProcedimentoAgendado;
 import com.gft.agendamento_service.models.ProcedimentoAgendado.CreateProcedimento;
 import com.gft.agendamento_service.models.ProcedimentoAgendado.UpdateProcedimento;
@@ -33,14 +34,14 @@ public class ProcedimentoController {
     }
 
     @PostMapping("/cadastro/procedimento")
-    public ResponseEntity<Void> createProcedimento(
+    public ResponseEntity<MessageResponse> createProcedimento(
             @Validated(CreateProcedimento.class) @RequestBody ProcedimentoAgendado procedimento) {
-        this.procedimentoService.createProcedimento(procedimento);
+        MessageResponse response =this.procedimentoService.createProcedimento(procedimento);
 
         URI uri = ServletUriComponentsBuilder.fromCurrentRequest()
                 .path("/{id}").buildAndExpand(procedimento.getId()).toUri();
 
-        return ResponseEntity.created(uri).build();
+        return ResponseEntity.created(uri).body(response);
     }
 
     @GetMapping("/procedimentos/{cpf}")

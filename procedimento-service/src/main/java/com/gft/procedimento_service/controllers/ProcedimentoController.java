@@ -77,11 +77,9 @@ public class ProcedimentoController {
     }
 
     @PutMapping("/procedimentos/marcar")
-    public ResponseEntity<Void> marcarProcedimento(@RequestBody ExameRequest request,
-                                                   @RequestHeader("X-Request-Origin") String origem
+    public ResponseEntity<Void> marcarProcedimento(@RequestBody ExameRequest request
     ) {
-        OrigemProcedimento origemEnum = OrigemProcedimento.valueOf(origem);
-        this.procedimentoService.marcarProcedimento(request, origemEnum);
+        this.procedimentoService.marcarProcedimento(request);
         
         return ResponseEntity.noContent().build();
     }

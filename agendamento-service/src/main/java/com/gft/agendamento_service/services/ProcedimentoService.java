@@ -19,18 +19,18 @@ import com.gft.agendamento_service.repositories.ProcedimentoRepository;
 
 @Service
 public class ProcedimentoService {
-private final ProcedimentoRepository procedimentoRepository;
+    private final ProcedimentoRepository procedimentoRepository;
 
-private final PacienteRepository pacienteRepository;
+    private final PacienteRepository pacienteRepository;
 
-private final ProcedimentoPublisher procedimentoPublisher;
+    private final ProcedimentoPublisher procedimentoPublisher;
 
-private final ProcedimentoClient procedimentoClient;
+    private final ProcedimentoClient procedimentoClient;
 
-    ProcedimentoService(ProcedimentoRepository procedimentoRepository, 
-                        PacienteRepository pacienteRepository,
-                        ProcedimentoPublisher procedimentoPublisher,
-                        ProcedimentoClient procedimentoClient) {
+    ProcedimentoService(ProcedimentoRepository procedimentoRepository,
+            PacienteRepository pacienteRepository,
+            ProcedimentoPublisher procedimentoPublisher,
+            ProcedimentoClient procedimentoClient) {
         this.procedimentoRepository = procedimentoRepository;
         this.pacienteRepository = pacienteRepository;
         this.procedimentoPublisher = procedimentoPublisher;
@@ -42,26 +42,28 @@ private final ProcedimentoClient procedimentoClient;
         if (!paciente.isPresent()) {
             throw new ResourceNotFoundException("Paciente não encontrado");
         }
-    
-        ProcedimentoRequest request = new ProcedimentoRequest(
-            paciente.get().getCpf(),
-            procedimento.getTipoExame(),
-            procedimento.getDataHora()
-        );
 
         ProcedimentoAgendado newProcedimento = new ProcedimentoAgendado();
-        newProcedimento.setStatus(Status.AGUARDANDO_CONFIRMACAO);
-        
-        UUID codigoExame = this.procedimentoClient.createProcedimento(request);
-
-        newProcedimento.setStatus(Status.AGENDADO);
         newProcedimento.setPaciente(paciente.get());
         newProcedimento.setDataHora(procedimento.getDataHora());
         newProcedimento.setTipoExame(procedimento.getTipoExame());
+        newProcedimento.setStatus(Status.AGUARDANDO_CONFIRMACAO);
+        ProcedimentoAgendado savedProcedimento = this.procedimentoRepository.save(newProcedimento);
 
-        this.procedimentoRepository.save(newProcedimento);
+        ProcedimentoRequest request = new ProcedimentoRequest();
+        request.setCodigoAgendamento(savedProcedimento.getId());
+        request.setPacienteCpf(paciente.get().getCpf());
+        request.setTipoProcedimento(procedimento.getTipoExame());
+        request.setDataHora(procedimento.getDataHora());
+
+        UUID codigoExame = this.procedimentoClient.createProcedimento(request, "AGENDAMENTO");
+
+        savedProcedimento.setStatus(Status.AGENDADO);
+        this.procedimentoRepository.save(savedProcedimento);
+
         MessageResponse procedimentoResponse = new MessageResponse();
-        procedimentoResponse.setMessage("O exame " + procedimento.getTipoExame() + " de " + paciente.get().getNome() + " foi marcado com sucesso para a data " + procedimento.getDataHora()); 
+        procedimentoResponse.setMessage("O exame " + procedimento.getTipoExame() + " de " + paciente.get().getNome()
+                + " foi marcado com sucesso para a data " + procedimento.getDataHora());
         procedimentoResponse.setCodigo(codigoExame);
 
         return procedimentoResponse;
@@ -80,7 +82,8 @@ private final ProcedimentoClient procedimentoClient;
     public List<ProcedimentoAgendado> findByPacienteCpf(String cpf) {
         Optional<List<ProcedimentoAgendado>> procedimentos = this.procedimentoRepository.findByPacienteCpf(cpf);
 
-        return procedimentos.orElseThrow(() -> new ResourceNotFoundException("Nenhuma consulta foi encontrada. CPF: " + cpf));
+        return procedimentos
+                .orElseThrow(() -> new ResourceNotFoundException("Nenhuma consulta foi encontrada. CPF: " + cpf));
     }
 
     public ProcedimentoAgendado updateProcedimento(ProcedimentoAgendado newProcedimento, UUID id) {

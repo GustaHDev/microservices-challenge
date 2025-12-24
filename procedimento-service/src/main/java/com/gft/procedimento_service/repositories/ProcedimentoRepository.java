@@ -13,7 +13,9 @@ import java.time.LocalDateTime;
 public interface ProcedimentoRepository extends JpaRepository<Procedimento, UUID> {
     Optional<List<Procedimento>> findByDataHora(LocalDateTime dataHora);
 
+    Optional<Procedimento> findByCodigoAgendamento(UUID codigoAgendamento);
+
     Optional<Procedimento> findByPacienteCpf(String pacienteCpf);
 
-    Optional<Procedimento> existsByTipoProcedimentoAndDataHora(String tipoProcedimento, LocalDateTime dataHora);
+    boolean existsByTipoProcedimentoAndDataHora(String tipoProcedimento, LocalDateTime dataHora);
 }

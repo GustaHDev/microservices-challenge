@@ -15,7 +15,7 @@ public class ProcedimentoConsumer {
         this.procedimentoService = procedimentoService;
     }
 
-    @RabbitListener(queues = "procedimento.finalizado.queue")
+    @RabbitListener(queues = "procedimento.cancelado.queue")
     public void onProcedimentoCancelado(CancelEvent event) {
         this.procedimentoService.cancelarProcedimento(event.getId());
     }

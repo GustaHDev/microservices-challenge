@@ -35,6 +35,9 @@ public class Procedimento {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
+    @Column(name = "codigo_agendamento")
+    private UUID codigoAgendamento;
+
     @NotBlank(message = "O CPF do paciente é obrigatório.", groups = { createProcedimento.class,
             updateProcedimento.class })
     @Column(nullable = false)

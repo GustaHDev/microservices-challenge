@@ -45,7 +45,7 @@ public class ProcedimentoService {
             throw new BusinessException("Procedimentos de complexidade ALTA só podem ser marcados na clínica.");
         }
 
-        boolean exists = this.procedimentoRepository.existsByTipoProcedimentoAndDataHora(procedimento.getTipoProcedimento(), procedimento.getDataHora()).isPresent();
+        boolean exists = this.procedimentoRepository.existsByTipoProcedimentoAndDataHora(procedimento.getTipoProcedimento(), procedimento.getDataHora());
         if (exists && procedimento.getComplexidade() == Complexidade.BAIXA) {
             throw new BusinessException("Já existe um procedimento do tipo " + procedimento.getTipoProcedimento() + " agendado para este horário.");
         }
@@ -75,16 +75,15 @@ public class ProcedimentoService {
         return this.procedimentoRepository.findAll();
     }
 
-    public Procedimento marcarProcedimento(ExameRequest request, OrigemProcedimento origem) {
-
+    public Procedimento marcarProcedimento(ExameRequest request) {
         Procedimento procedimento = this.findById(request.getIdExame());
 
         if (procedimento != null &&
                 procedimento.getDataHora().equals(request.getDataHora()) &&
                 procedimento.getPacienteCpf().equals(request.getCpfPaciente())) {
             procedimento.setStatus(Status.FINALIZADO);
-            this.procedimentoPublisher.publishProcedimentoFinalizado(procedimento.getId());
-            return this.saveProcedimento(procedimento, origem);
+            this.procedimentoPublisher.publishProcedimentoFinalizado(procedimento.getCodigoAgendamento());
+            return this.procedimentoRepository.save(procedimento);
         } else {
             throw new IllegalArgumentException("Procedimento não encontrado ou dados inválidos.");
         }
@@ -106,7 +105,7 @@ public class ProcedimentoService {
     }
 
     public void cancelarProcedimento(UUID procedimentoId) {
-        Procedimento procedimento = this.findById(procedimentoId);
+        Procedimento procedimento = this.procedimentoRepository.findByCodigoAgendamento(procedimentoId).orElseThrow(() -> new ResourceNotFoundException("Procedimento não encontrado. ID: " + procedimentoId));
 
         procedimento.setStatus(Status.CANCELADO);
 

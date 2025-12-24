@@ -15,8 +15,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public class RabbitConfig {
 
     private static final String CONSULTA_EXCHANGE = "exchange.consultas";
-    private static final String CONSULTA_ROUTING_KEY = "consulta.cancelada";
-    private static final String CONSULTA_QUEUE = "consulta.cancelada.queue";
+
+    private static final String CONSULTA_FINALIZADA_ROUTING_KEY = "consulta.finalizada";
+    private static final String CONSULTA_FINALIZADA_QUEUE = "consulta.finalizada.queue";
+
+    private static final String CONSULTA_CANCELADA_ROUTING_KEY = "consulta.cancelada";
+    private static final String CONSULTA_CANCELADA_QUEUE = "consulta.cancelada.queue";
 
     @Bean
     public MessageConverter jsonMessageConverter() {
@@ -26,19 +30,30 @@ public class RabbitConfig {
         return converter;
     }
 
+    
     @Bean
     public TopicExchange consultaExchange() {
         return new TopicExchange(CONSULTA_EXCHANGE);
     }
 
     @Bean
-    public Queue consultaCanceladaQueue() {
-        return new Queue(CONSULTA_QUEUE);
+    public Queue consultaFinalizadaQueue() {
+        return new Queue(CONSULTA_FINALIZADA_QUEUE);
     }
 
     @Bean
-    public Binding consultaBinding(Queue consultaCanceladaQueue, TopicExchange consultaExchange) {
-        return BindingBuilder.bind(consultaCanceladaQueue).to(consultaExchange).with(CONSULTA_ROUTING_KEY);
+    public Binding consultaFinalizadaBinding(Queue consultaFinalizadaQueue, TopicExchange consultaExchange) {
+        return BindingBuilder.bind(consultaFinalizadaQueue).to(consultaExchange).with(CONSULTA_FINALIZADA_ROUTING_KEY);
+    }
+
+    @Bean
+    public Queue consultaCanceladaQueue() {
+        return new Queue(CONSULTA_CANCELADA_QUEUE);
+    }
+
+    @Bean
+    public Binding consultaCanceladaBinding(Queue consultaCanceladaQueue, TopicExchange consultaExchange) {
+        return BindingBuilder.bind(consultaCanceladaQueue).to(consultaExchange).with(CONSULTA_CANCELADA_ROUTING_KEY);
     }
 
 }

@@ -9,37 +9,42 @@ import org.springframework.stereotype.Service;
 import com.gft.agendamento_service.client.ProcedimentoClient;
 import com.gft.agendamento_service.dtos.MessageResponse;
 import com.gft.agendamento_service.dtos.ProcedimentoRequest;
+import com.gft.agendamento_service.exceptions.ResourceNotFoundException;
 import com.gft.agendamento_service.models.Paciente;
 import com.gft.agendamento_service.models.ProcedimentoAgendado;
 import com.gft.agendamento_service.models.Status;
 import com.gft.agendamento_service.publishers.ProcedimentoPublisher;
+import com.gft.agendamento_service.repositories.PacienteRepository;
 import com.gft.agendamento_service.repositories.ProcedimentoRepository;
 
 @Service
 public class ProcedimentoService {
 private final ProcedimentoRepository procedimentoRepository;
 
-private final PacienteService pacienteService;
+private final PacienteRepository pacienteRepository;
 
 private final ProcedimentoPublisher procedimentoPublisher;
 
 private final ProcedimentoClient procedimentoClient;
 
     ProcedimentoService(ProcedimentoRepository procedimentoRepository, 
-                        PacienteService pacienteService,
+                        PacienteRepository pacienteRepository,
                         ProcedimentoPublisher procedimentoPublisher,
                         ProcedimentoClient procedimentoClient) {
         this.procedimentoRepository = procedimentoRepository;
-        this.pacienteService = pacienteService;
+        this.pacienteRepository = pacienteRepository;
         this.procedimentoPublisher = procedimentoPublisher;
         this.procedimentoClient = procedimentoClient;
     }
 
     public MessageResponse createProcedimento(ProcedimentoAgendado procedimento) {
-        Paciente paciente = pacienteService.findByCpf(procedimento.getPaciente().getCpf());
+        Optional<Paciente> paciente = pacienteRepository.findByCpf(procedimento.getPaciente().getCpf());
+        if (!paciente.isPresent()) {
+            throw new ResourceNotFoundException("Paciente não encontrado");
+        }
     
         ProcedimentoRequest request = new ProcedimentoRequest(
-            paciente.getCpf(),
+            paciente.get().getCpf(),
             procedimento.getTipoExame(),
             procedimento.getDataHora()
         );
@@ -50,13 +55,13 @@ private final ProcedimentoClient procedimentoClient;
         UUID codigoExame = this.procedimentoClient.createProcedimento(request);
 
         newProcedimento.setStatus(Status.AGENDADO);
-        newProcedimento.setPaciente(paciente);
+        newProcedimento.setPaciente(paciente.get());
         newProcedimento.setDataHora(procedimento.getDataHora());
         newProcedimento.setTipoExame(procedimento.getTipoExame());
 
         this.procedimentoRepository.save(newProcedimento);
         MessageResponse procedimentoResponse = new MessageResponse();
-        procedimentoResponse.setMessage("O exame " + procedimento.getTipoExame() + " de " + paciente.getNome() + " foi marcado com sucesso para a data " + procedimento.getDataHora()); 
+        procedimentoResponse.setMessage("O exame " + procedimento.getTipoExame() + " de " + paciente.get().getNome() + " foi marcado com sucesso para a data " + procedimento.getDataHora()); 
         procedimentoResponse.setCodigo(codigoExame);
 
         return procedimentoResponse;
@@ -69,13 +74,13 @@ private final ProcedimentoClient procedimentoClient;
     public ProcedimentoAgendado findProcedimentoById(UUID id) {
         Optional<ProcedimentoAgendado> procedimento = this.procedimentoRepository.findById(id);
 
-        return procedimento.orElse(null);
+        return procedimento.orElseThrow(() -> new ResourceNotFoundException("Procedimento não encontrado. ID: " + id));
     }
 
     public List<ProcedimentoAgendado> findByPacienteCpf(String cpf) {
         Optional<List<ProcedimentoAgendado>> procedimentos = this.procedimentoRepository.findByPacienteCpf(cpf);
 
-        return procedimentos.orElse(null);
+        return procedimentos.orElseThrow(() -> new ResourceNotFoundException("Nenhuma consulta foi encontrada. CPF: " + cpf));
     }
 
     public ProcedimentoAgendado updateProcedimento(ProcedimentoAgendado newProcedimento, UUID id) {

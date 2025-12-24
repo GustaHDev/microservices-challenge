@@ -11,6 +11,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -44,11 +45,12 @@ public class ConsultaAgendada {
     private Paciente paciente;
 
     @NotNull(message = "O campo horario é obrigatório!", groups = { CreateConsulta.class, UpdateConsulta.class })
+    @Future(message = "A consulta deve ser agendada para uma data futura", groups = { CreateConsulta.class, UpdateConsulta.class})
     @Column(nullable = false)
     private LocalDateTime dataHora;
 
     @NotBlank(message = "O campo especialidade é obrigatório!", groups = { CreateConsulta.class, UpdateConsulta.class })
-    @Column(nullable = false)
+    @Column(name = "especialidade_med", nullable = false)
     private String especialidadeMed;
 
     @Column(name = "status_consulta")

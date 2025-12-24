@@ -14,6 +14,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import com.gft.clinica_service.dtos.AgendaRequest;
 import com.gft.clinica_service.dtos.ConsultaDTO;
 import com.gft.clinica_service.dtos.ConsultaRequest;
+import com.gft.clinica_service.dtos.ConsultaResponse;
 import com.gft.clinica_service.dtos.MessageResponse;
 import com.gft.clinica_service.dtos.ProcedimentoRequest;
 import com.gft.clinica_service.models.Consulta;
@@ -49,10 +50,10 @@ public class ConsultaController {
     }
 
     @PutMapping("/AtenderConsulta")
-    public ResponseEntity<Void> updateConsulta(@RequestBody ConsultaRequest request) {
-        this.consultaService.updateConsulta(request);
+    public ResponseEntity<ConsultaResponse> updateConsulta(@RequestBody ConsultaRequest request) {
+        ConsultaResponse response = this.consultaService.updateConsulta(request);
 
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok().body(response);
     }
 
     @PostMapping("/cadastro/procedimento")

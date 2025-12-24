@@ -40,6 +40,9 @@ public class Consulta {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
+    @Column(name = "codigo_agendamento")
+    private UUID codigoAgendamento;
+
     @NotNull(message = "O cpf do paciente é obrigatório!", groups = { CreateConsulta.class, UpdateConsulta.class })
     @Column(nullable = false)
     private String cpfPaciente;
@@ -53,8 +56,7 @@ public class Consulta {
     private LocalDateTime dataHora;
 
     @ElementCollection
-    @CollectionTable(name = "consulta_sintomas", 
-    joinColumns = @JoinColumn(name = "consulta_id"))
+    @CollectionTable(name = "consulta_sintomas", joinColumns = @JoinColumn(name = "consulta_id"))
     @Column
     private List<String> sintomas;
 

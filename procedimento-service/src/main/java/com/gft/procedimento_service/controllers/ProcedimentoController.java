@@ -12,11 +12,13 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import com.gft.procedimento_service.dtos.ExameRequest;
+import com.gft.procedimento_service.models.OrigemProcedimento;
 import com.gft.procedimento_service.models.Procedimento;
 import com.gft.procedimento_service.services.ProcedimentoService;
 
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -34,8 +36,11 @@ public class ProcedimentoController {
     }
 
     @PostMapping("/cadastro/procedimento")
-    public ResponseEntity<UUID> saveProcedimento(@RequestBody Procedimento procedimento) {
-        this.procedimentoService.saveProcedimento(procedimento);
+    public ResponseEntity<UUID> saveProcedimento(@RequestBody Procedimento procedimento,
+                                                 @RequestHeader("X-Request-Origin") String origem
+    ) {
+        OrigemProcedimento origemEnum = OrigemProcedimento.valueOf(origem);
+        this.procedimentoService.saveProcedimento(procedimento, origemEnum);
 
         URI uri = ServletUriComponentsBuilder.fromCurrentRequest()
                 .path("/{id}").buildAndExpand(procedimento.getId()).toUri();
@@ -72,8 +77,11 @@ public class ProcedimentoController {
     }
 
     @PutMapping("/procedimentos/marcar")
-    public ResponseEntity<Void> marcarProcedimento(@RequestBody ExameRequest request) {
-        this.procedimentoService.marcarProcedimento(request);
+    public ResponseEntity<Void> marcarProcedimento(@RequestBody ExameRequest request,
+                                                   @RequestHeader("X-Request-Origin") String origem
+    ) {
+        OrigemProcedimento origemEnum = OrigemProcedimento.valueOf(origem);
+        this.procedimentoService.marcarProcedimento(request, origemEnum);
         
         return ResponseEntity.noContent().build();
     }
@@ -82,7 +90,7 @@ public class ProcedimentoController {
     public ResponseEntity<Void> deleteProcedimento(@PathVariable UUID id) {
         Procedimento procedimento = this.procedimentoService.findById(id);
 
-        this.procedimentoService.deletProcedimento(procedimento.getId());
+        this.procedimentoService.deleteProcedimento(procedimento.getId());
         return ResponseEntity.noContent().build();
     }
  

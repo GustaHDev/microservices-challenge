@@ -11,7 +11,7 @@ import com.gft.agendamento_service.dtos.ConsultaRequest;
 @FeignClient(name = "clinica-service", url = "http://clinica-service:8082")
 public interface ClinicaClient {
 
-    @PostMapping("/api/cadastro/consulta")
+    @PostMapping("/api/clinica/cadastro/consulta")
     UUID createConsulta(@RequestBody ConsultaRequest consulta);
 
 }

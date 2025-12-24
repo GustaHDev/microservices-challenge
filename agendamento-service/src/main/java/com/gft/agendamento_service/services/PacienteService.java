@@ -7,6 +7,7 @@ import java.util.UUID;
 import org.springframework.stereotype.Service;
 
 import com.gft.agendamento_service.dtos.PacienteResponse;
+import com.gft.agendamento_service.exceptions.ResourceNotFoundException;
 import com.gft.agendamento_service.models.Paciente;
 import com.gft.agendamento_service.repositories.PacienteRepository;
 
@@ -43,7 +44,7 @@ public class PacienteService {
     public Paciente findPacienteById(UUID id) {
         Optional<Paciente> paciente = this.pacienteRepository.findById(id);
 
-        return paciente.orElse(null);
+        return paciente.orElseThrow(() -> new ResourceNotFoundException("Paciente não encontrado. ID: " + id));
     }
 
     public PacienteResponse findResponseById(UUID id) {
@@ -56,14 +57,13 @@ public class PacienteService {
     public Paciente findByCpf(String cpf) {
         Optional<Paciente> paciente = this.pacienteRepository.findByCpf(cpf);
 
-        return paciente.orElse(null);
+        return paciente.orElseThrow(() -> new ResourceNotFoundException("Paciente não encontrado. CPF: " + cpf));
     }
 
     public List<Paciente> findByName(String nome) {
-        String nomeCase = nome.toLowerCase();
-        Optional<List<Paciente>> pacientes = this.pacienteRepository.findByNome(nomeCase);
+        Optional<List<Paciente>> pacientes = this.pacienteRepository.findByNome(nome);
 
-        return pacientes.orElse(null);
+        return pacientes.orElseThrow(() -> new ResourceNotFoundException("Nenhum Paciente foi encontrado. Nome:" + nome));
     }
 
     public Paciente updatePaciente(Paciente newPaciente, UUID id) {

@@ -4,7 +4,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-
 import org.springframework.stereotype.Service;
 
 import com.gft.clinica_service.client.AgendamentoClient;
@@ -12,7 +11,10 @@ import com.gft.clinica_service.client.ProcedimentoClient;
 import com.gft.clinica_service.dtos.AgendaRequest;
 import com.gft.clinica_service.dtos.ConsultaDTO;
 import com.gft.clinica_service.dtos.ConsultaRequest;
+import com.gft.clinica_service.dtos.ConsultaResponse;
 import com.gft.clinica_service.dtos.ProcedimentoRequest;
+import com.gft.clinica_service.exceptions.BusinessException;
+import com.gft.clinica_service.exceptions.ResourceNotFoundException;
 import com.gft.clinica_service.dtos.MessageResponse;
 import com.gft.clinica_service.dtos.PacienteResponse;
 import com.gft.clinica_service.models.Complexidade;
@@ -26,6 +28,8 @@ import com.gft.clinica_service.repositories.ConsultaRepository;
 
 @Service
 public class ConsultaService {
+
+    private final DoencaService doencaService;
 
     private final ConsultaRepository consultaRepository;
 
@@ -42,13 +46,14 @@ public class ConsultaService {
             AgendamentoClient agendamentoClient,
             SintomaService sintomaService,
             ProcedimentoClient procedimentoClient,
-            ConsultaPublisher consultaPublisher) {
+            ConsultaPublisher consultaPublisher, DoencaService doencaService) {
         this.consultaRepository = consultaRepository;
         this.medicoService = medicoService;
         this.agendamentoClient = agendamentoClient;
         this.sintomaService = sintomaService;
         this.procedimentoClient = procedimentoClient;
         this.consultaPublisher = consultaPublisher;
+        this.doencaService = doencaService;
     }
 
     private Complexidade determinarComplexidade(List<Sintoma> sintomas) {
@@ -96,6 +101,16 @@ public class ConsultaService {
 
         Medico medico = medicoService.findMedicoByEspecialidade(request.getEspecialidadeMed()).getFirst();
 
+        ConsultaDTO consultaExists = this.findConsultasByCrm(medico.getCrm()).stream()
+                .filter(c -> c.getDataHora().equals(request.getDataHora()))
+                .findFirst()
+                .orElse(null);
+
+        if (consultaExists != null) {
+            throw new BusinessException("Consulta já agendada para este médico e horário.");
+        }
+
+        newConsulta.setCodigoAgendamento(request.getCodigoAgendamento());
         newConsulta.setCpfPaciente(request.getCpfPaciente());
         newConsulta.setCrmMedico(medico.getCrm());
         newConsulta.setDataHora(request.getDataHora());
@@ -108,7 +123,7 @@ public class ConsultaService {
     public Consulta findConsultaById(UUID id) {
         Optional<Consulta> consulta = this.consultaRepository.findById(id);
 
-        return consulta.orElse(null);
+        return consulta.orElseThrow(() -> new ResourceNotFoundException("Consulta não encontrada. ID: " + id));
     }
 
     public Consulta findConsultaByDataHora(LocalDateTime dataHora) {
@@ -147,7 +162,7 @@ public class ConsultaService {
     }
 
     // UTILIZADO QUANDO CONSULTA FOR ATENDIDA
-    public Consulta updateConsulta(ConsultaRequest newConsulta) {
+    public ConsultaResponse updateConsulta(ConsultaRequest newConsulta) {
         Consulta updatedConsulta;
 
         if (newConsulta.getCodigoConsulta() != null) {
@@ -158,7 +173,6 @@ public class ConsultaService {
             throw new IllegalArgumentException("É necessário informar Código OU Horário da consulta.");
         }
 
-        
         PacienteResponse paciente = this.getPacienteByCpf(newConsulta.getCpfPaciente());
 
         List<Sintoma> sintomas = this.sintomaService.findSintomaByName(newConsulta.getSintomas());
@@ -168,16 +182,30 @@ public class ConsultaService {
         updatedConsulta.setCpfPaciente(paciente.getCpf());
         updatedConsulta.setSintomas(newConsulta.getSintomas());
         updatedConsulta.setComplexidade(complexidade);
-        
+
         updatedConsulta.setStatus(Status.FINALIZADO);
 
-        this.consultaPublisher.publishConsultaFinalizada(updatedConsulta.getId());
+        this.consultaPublisher.publishConsultaFinalizada(updatedConsulta.getCodigoAgendamento());
 
-        return this.consultaRepository.save(updatedConsulta);
+        ConsultaResponse response = new ConsultaResponse();
+
+        response.setPossiveisDoencas(this.doencaService
+                .findDoencaBySintomas(newConsulta.getSintomas()));
+
+        if (response.getPossiveisDoencas().isEmpty()) {
+            response.setMessage(
+                    "Consulta finalizada. Não foi possível encontrar doenças compatíveis com os sintomas inseridos");
+        }
+
+        response.setMessage("Consulta finalizada. Possíveis doenças e seus tratamentos: ");
+
+        this.consultaRepository.save(updatedConsulta);
+
+        return response;
     }
 
     public void cancelarConsulta(UUID id) {
-        Consulta consulta = this.findConsultaById(id);
+        Consulta consulta = this.consultaRepository.findByCodigoAgendamento(id).orElseThrow(() -> new ResourceNotFoundException("Não foi possível encontrar a consulta. ID agendamento: " + id));
 
         consulta.setStatus(Status.CANCELADO);
 
@@ -197,7 +225,8 @@ public class ConsultaService {
 
         MessageResponse procedimentoResponse = new MessageResponse();
         procedimentoResponse.setCodigo(codigoExame);
-        procedimentoResponse.setMessage("Exame registrado sobre o CPF: " + paciente.getCpf() + ", por favor, agendar horário no sistema.");
+        procedimentoResponse.setMessage(
+                "Exame registrado sobre o CPF: " + paciente.getCpf() + ", por favor, agendar horário no sistema.");
 
         return procedimentoResponse;
     }

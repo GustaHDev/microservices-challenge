@@ -8,7 +8,10 @@ import java.util.UUID;
 import org.springframework.stereotype.Service;
 
 import com.gft.procedimento_service.dtos.ExameRequest;
+import com.gft.procedimento_service.exceptions.BusinessException;
+import com.gft.procedimento_service.exceptions.ResourceNotFoundException;
 import com.gft.procedimento_service.models.Complexidade;
+import com.gft.procedimento_service.models.OrigemProcedimento;
 import com.gft.procedimento_service.models.Procedimento;
 import com.gft.procedimento_service.models.Status;
 import com.gft.procedimento_service.models.TipoExame;
@@ -30,54 +33,64 @@ public class ProcedimentoService {
     }
 
     public Complexidade definirComplexidade(String tipoExame) {
-        TipoExame exame = TipoExame.valueOf(tipoExame.toUpperCase());
+        TipoExame exame = TipoExame.fromNome(tipoExame.toUpperCase());
         return exame.getComplexidade();
     }
 
-    public Procedimento saveProcedimento(Procedimento procedimento) {
+    public Procedimento saveProcedimento(Procedimento procedimento, OrigemProcedimento origem) {
+
         procedimento.setComplexidade(this.definirComplexidade(procedimento.getTipoProcedimento()));
-        if (procedimento.getComplexidade() == Complexidade.ALTA) {
-            throw new IllegalArgumentException("Procedimentos de complexidade ALTA só podem ser marcados na clínica.");
+
+        if (procedimento.getComplexidade() == Complexidade.ALTA && origem == OrigemProcedimento.AGENDAMENTO) {
+            throw new BusinessException("Procedimentos de complexidade ALTA só podem ser marcados na clínica.");
         }
+
+        boolean exists = this.procedimentoRepository.existsByTipoProcedimentoAndDataHora(procedimento.getTipoProcedimento(), procedimento.getDataHora()).isPresent();
+        if (exists && procedimento.getComplexidade() == Complexidade.BAIXA) {
+            throw new BusinessException("Já existe um procedimento do tipo " + procedimento.getTipoProcedimento() + " agendado para este horário.");
+        }
+
         return this.procedimentoRepository.save(procedimento);
     }
 
     public Procedimento findById(UUID id) {
         Optional <Procedimento> procedimento = this.procedimentoRepository.findById(id);
 
-        return procedimento.orElse(null);
+        return procedimento.orElseThrow(() -> new ResourceNotFoundException("Procedimento não encontrado. ID: " + id));
     }
 
     public Procedimento findByPacienteCpf(String cpf) {
         Optional<Procedimento> procedimento = this.procedimentoRepository.findByPacienteCpf(cpf);
         
-        return procedimento.orElse(null);
+        return procedimento.orElseThrow(() -> new ResourceNotFoundException("Procedimento não encontrado. CPF: " + cpf));
     }
 
     public List<Procedimento> findByDataHora(LocalDateTime dataHora) {
         Optional<List<Procedimento>> procedimentos = this.procedimentoRepository.findByDataHora(dataHora);
 
-        return procedimentos.orElse(null);
+        return procedimentos.orElseThrow(() -> new ResourceNotFoundException("Nenhum procedimento foi encontrado. Horário: " + dataHora));
     }
 
     public List<Procedimento> findAll() {
         return this.procedimentoRepository.findAll();
     }
 
-    public Procedimento marcarProcedimento(ExameRequest request) {
+    public Procedimento marcarProcedimento(ExameRequest request, OrigemProcedimento origem) {
+
         Procedimento procedimento = this.findById(request.getIdExame());
+
         if (procedimento != null &&
                 procedimento.getDataHora().equals(request.getDataHora()) &&
                 procedimento.getPacienteCpf().equals(request.getCpfPaciente())) {
             procedimento.setStatus(Status.FINALIZADO);
             this.procedimentoPublisher.publishProcedimentoFinalizado(procedimento.getId());
-            return this.saveProcedimento(procedimento);
+            return this.saveProcedimento(procedimento, origem);
         } else {
             throw new IllegalArgumentException("Procedimento não encontrado ou dados inválidos.");
         }
     }
 
-    public Procedimento updateProcedimento(Procedimento newProcedimento, UUID id) {
+    public Procedimento updateProcedimento(Procedimento newProcedimento, UUID id, OrigemProcedimento origem) {
         Procedimento updatedProcedimento = this.findById(id);
 
         if (updatedProcedimento != null) {
@@ -86,7 +99,7 @@ public class ProcedimentoService {
             updatedProcedimento.setPacienteCpf(newProcedimento.getPacienteCpf());
             updatedProcedimento.setStatus(newProcedimento.getStatus());
 
-            return this.saveProcedimento(updatedProcedimento);
+            return this.saveProcedimento(updatedProcedimento, origem);
         } else {
             throw new IllegalArgumentException("Procedimento não encontrado.");
         }
@@ -100,7 +113,7 @@ public class ProcedimentoService {
         this.procedimentoRepository.save(procedimento);
     }
 
-    public void deletProcedimento(UUID id) {
+    public void deleteProcedimento(UUID id) {
         Procedimento procedimento = this.findById(id);
 
         this.procedimentoRepository.delete(procedimento);

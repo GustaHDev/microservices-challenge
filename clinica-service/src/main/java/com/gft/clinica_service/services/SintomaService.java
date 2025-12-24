@@ -6,6 +6,7 @@ import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 
+import com.gft.clinica_service.exceptions.ResourceNotFoundException;
 import com.gft.clinica_service.models.Doenca;
 import com.gft.clinica_service.models.Sintoma;
 import com.gft.clinica_service.repositories.DoencaRepository;
@@ -37,19 +38,19 @@ public class SintomaService {
     public Sintoma findSintomaById(UUID id) {
         Optional<Sintoma> sintoma = this.sintomaRepository.findById(id);
 
-        return sintoma.orElse(null);
+        return sintoma.orElseThrow(() -> new ResourceNotFoundException("Sintoma não encontrado. ID: " + id));
     }
 
     public List<Sintoma> findSintomaByDoencas(List<Doenca> doencas) {
         Optional<List<Sintoma>> sintomas = this.sintomaRepository.findByDoencas(doencas);
 
-        return sintomas.orElse(null);
+        return sintomas.orElseThrow(() -> new ResourceNotFoundException("Nenhum sintoma foi encontrado. Doenças: " + doencas));
     }
 
     public List<Sintoma> findSintomaByName(List<String> nomes) {
         Optional<List<Sintoma>> sintomas = this.sintomaRepository.findByNomeIn(nomes);
 
-        return sintomas.orElse(null);
+        return sintomas.orElseThrow(() -> new ResourceNotFoundException("Nenhum sintoma foi encontrado. Nomes: " + nomes));
     }
 
     public Sintoma setDoencas(UUID id, List<String> nomeDoencas) {

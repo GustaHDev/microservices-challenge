@@ -11,7 +11,7 @@ import com.gft.agendamento_service.dtos.ProcedimentoRequest;
 @FeignClient(name = "procedimento-service", url = "http://procedimento-service:8083")
 public interface ProcedimentoClient {
 
-    @PostMapping("/api/cadastro/procedimento")
+    @PostMapping("/api/procedimento/cadastro/procedimento")
     UUID createProcedimento(@RequestBody ProcedimentoRequest request);
 
 }

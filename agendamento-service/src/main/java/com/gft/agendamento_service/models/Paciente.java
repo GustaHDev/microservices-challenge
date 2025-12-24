@@ -2,6 +2,8 @@ package com.gft.agendamento_service.models;
 
 import java.util.UUID;
 
+import org.hibernate.validator.constraints.br.CPF;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -38,6 +40,7 @@ public class Paciente {
     private String nome;
 
     @NotBlank(message = "O campo cpf é obrigatório!", groups = {CreatePaciente.class, UpdatePaciente.class})
+    @CPF(message = "CPF inválido!", groups = { CreatePaciente.class, UpdatePaciente.class })
     @Column(nullable = false, unique = true)
     private String cpf;
 

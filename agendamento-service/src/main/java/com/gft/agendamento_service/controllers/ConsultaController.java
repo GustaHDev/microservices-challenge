@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import com.gft.agendamento_service.dtos.MessageResponse;
 import com.gft.agendamento_service.models.ConsultaAgendada;
 import com.gft.agendamento_service.models.ConsultaAgendada.CreateConsulta;
 import com.gft.agendamento_service.models.ConsultaAgendada.UpdateConsulta;
@@ -35,14 +36,14 @@ public class ConsultaController {
     }
 
     @PostMapping("/cadastro/consulta")
-    public ResponseEntity<Void> createConsulta(
+    public ResponseEntity<MessageResponse> createConsulta(
             @Validated(CreateConsulta.class) @RequestBody ConsultaAgendada consulta) {
-        this.consultaService.createConsulta(consulta);
+        MessageResponse response = this.consultaService.createConsulta(consulta);
 
         URI uri = ServletUriComponentsBuilder.fromCurrentRequest()
                 .path("/{id}").buildAndExpand(consulta.getId()).toUri();
 
-        return ResponseEntity.created(uri).build();
+        return ResponseEntity.created(uri).body(response);
     }
 
     @GetMapping("/consultas/{cpf}")

@@ -9,60 +9,70 @@ import org.springframework.stereotype.Service;
 import com.gft.agendamento_service.client.ClinicaClient;
 import com.gft.agendamento_service.dtos.ConsultaRequest;
 import com.gft.agendamento_service.dtos.MessageResponse;
+import com.gft.agendamento_service.exceptions.ResourceNotFoundException;
 import com.gft.agendamento_service.models.ConsultaAgendada;
 import com.gft.agendamento_service.models.Paciente;
 import com.gft.agendamento_service.models.Status;
 import com.gft.agendamento_service.publishers.ConsultaPublisher;
 import com.gft.agendamento_service.repositories.ConsultaRepository;
+import com.gft.agendamento_service.repositories.PacienteRepository;
 
 @Service
 public class ConsultaService {
     private final ConsultaRepository consultaRepository;
-
-    private final PacienteService pacienteService;
+    private final PacienteRepository pacienteRepository;
 
     private final ConsultaPublisher consultaPublisher;
 
     private final ClinicaClient clinicaClient;
 
-    ConsultaService(ConsultaRepository consultaRepository, 
-                    PacienteService pacienteService, 
-                    ConsultaPublisher consultaPublisher,
-                    ClinicaClient clinicaClient) {
+    ConsultaService(ConsultaRepository consultaRepository,
+            PacienteRepository pacienteRepository,
+            ConsultaPublisher consultaPublisher,
+            ClinicaClient clinicaClient) {
         this.consultaRepository = consultaRepository;
-        this.pacienteService = pacienteService;
+        this.pacienteRepository = pacienteRepository;
         this.consultaPublisher = consultaPublisher;
         this.clinicaClient = clinicaClient;
     }
 
     public MessageResponse createConsulta(ConsultaAgendada consulta) {
-        Paciente paciente = pacienteService.findByCpf(consulta.getPaciente().getCpf());
+        Optional<Paciente> paciente = pacienteRepository.findByCpf(consulta.getPaciente().getCpf());
+        if (!paciente.isPresent()) {
+            throw new ResourceNotFoundException("Paciente não encontrado");
+        }
 
-        
-        ConsultaRequest request = new ConsultaRequest(
-            paciente.getCpf(),
-            consulta.getEspecialidadeMed(),
-            consulta.getDataHora()
-        );
-        
         ConsultaAgendada newConsulta = new ConsultaAgendada();
-        newConsulta.setStatus(Status.AGUARDANDO_CONFIRMACAO);
-
-        UUID codigoConsulta = this.clinicaClient.createConsulta(request);
-
-        newConsulta.setStatus(Status.AGENDADO);
-        newConsulta.setPaciente(paciente);
+        newConsulta.setPaciente(paciente.get());
         newConsulta.setDataHora(consulta.getDataHora());
         newConsulta.setEspecialidadeMed(consulta.getEspecialidadeMed());
+        newConsulta.setStatus(Status.AGUARDANDO_CONFIRMACAO);
 
-        this.consultaRepository.save(newConsulta);
+        ConsultaAgendada savedConsulta = this.consultaRepository.save(newConsulta);
 
-        MessageResponse consultaResponse = new MessageResponse();
-        consultaResponse.setMessage("a consulta de " + paciente.getNome() + " foi marcada com sucesso para " + newConsulta.getEspecialidadeMed() + " na data " + newConsulta.getDataHora());
-        consultaResponse.setCodigo(codigoConsulta);
+        ConsultaRequest request = new ConsultaRequest();
+            request.setCodigoAgendamento(savedConsulta.getId());
+            request.setCpfPaciente(paciente.get().getCpf());
+            request.setEspecialidadeMed(consulta.getEspecialidadeMed());
+            request.setDataHora(consulta.getDataHora());
 
 
-        return consultaResponse;
+        try {
+            UUID codigoConsulta = this.clinicaClient.createConsulta(request);
+            savedConsulta.setStatus(Status.AGENDADO);
+
+            this.consultaRepository.save(savedConsulta);
+
+            MessageResponse consultaResponse = new MessageResponse();
+            consultaResponse.setMessage("a consulta de " + paciente.get().getNome() + " foi marcada com sucesso para "
+                    + newConsulta.getEspecialidadeMed() + " na data " + newConsulta.getDataHora());
+            consultaResponse.setCodigo(codigoConsulta);
+
+            return consultaResponse;
+        } catch (Exception e) {
+            throw new ResourceNotFoundException("Erro ao agendar consulta na clínica externa: " + e.getMessage());
+        }
+
     }
 
     public List<ConsultaAgendada> findAll() {
@@ -72,13 +82,14 @@ public class ConsultaService {
     public ConsultaAgendada findConsultaById(UUID id) {
         Optional<ConsultaAgendada> consulta = this.consultaRepository.findById(id);
 
-        return consulta.orElse(null);
+        return consulta.orElseThrow(() -> new ResourceNotFoundException("Consulta não encontrada. ID: " + id));
     }
 
     public List<ConsultaAgendada> findByPacienteCpf(String cpf) {
         Optional<List<ConsultaAgendada>> consultas = this.consultaRepository.findByPacienteCpf(cpf);
 
-        return consultas.orElse(null);
+        return consultas
+                .orElseThrow(() -> new ResourceNotFoundException("Nenhuma consulta foi encontrada. CPF: " + cpf));
     }
 
     public ConsultaAgendada updateConsulta(ConsultaAgendada newConsulta, UUID id) {

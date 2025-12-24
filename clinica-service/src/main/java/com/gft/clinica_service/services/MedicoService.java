@@ -6,6 +6,7 @@ import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 
+import com.gft.clinica_service.exceptions.ResourceNotFoundException;
 import com.gft.clinica_service.models.Medico;
 import com.gft.clinica_service.repositories.MedicoRepository;
 
@@ -31,13 +32,17 @@ public class MedicoService {
     public Medico findMedicoById(UUID id) {
         Optional<Medico> medico = this.medicoRepository.findById(id);
 
-        return medico.orElse(null);
+        return medico.orElseThrow(() -> new ResourceNotFoundException("Médico não encontrado. ID: " + id));
     }
 
     public List<Medico> findMedicoByEspecialidade(String especialidade) {
-        Optional<List<Medico>> medico = this.medicoRepository.findByEspecialidade(especialidade);
+        List<Medico> medico = this.medicoRepository.findByEspecialidade(especialidade);
 
-        return medico.orElse(null);
+        if (medico.isEmpty()) {
+            throw new ResourceNotFoundException("Médico não encontrado. Especialidade: " + especialidade);
+        }
+
+        return medico;
     }
 
     public Medico updateMedico(Medico newMedico, UUID id) {

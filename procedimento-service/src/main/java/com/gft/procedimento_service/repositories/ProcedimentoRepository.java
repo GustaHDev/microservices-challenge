@@ -14,4 +14,6 @@ public interface ProcedimentoRepository extends JpaRepository<Procedimento, UUID
     Optional<List<Procedimento>> findByDataHora(LocalDateTime dataHora);
 
     Optional<Procedimento> findByPacienteCpf(String pacienteCpf);
+
+    Optional<Procedimento> existsByTipoProcedimentoAndDataHora(String tipoProcedimento, LocalDateTime dataHora);
 }

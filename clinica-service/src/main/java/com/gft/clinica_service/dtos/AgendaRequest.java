@@ -1,7 +1,9 @@
 package com.gft.clinica_service.dtos;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
+import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -17,13 +19,12 @@ import lombok.Setter;
 @Setter
 public class AgendaRequest {
 
-    @NotNull(message = "cpf do paciente é obrigatório")
+    private UUID codigoAgendamento;
+
     private String cpfPaciente;
 
-    @NotNull(message = "horario é obrigatório")
     private LocalDateTime dataHora;
 
-    @NotBlank(message = "especialidade do médico é obrigatório")
     private String especialidadeMed;
 
-    }
+}

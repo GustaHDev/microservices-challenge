@@ -11,7 +11,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-
+import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -43,11 +43,12 @@ public class ProcedimentoAgendado {
     private Paciente paciente;
 
     @NotNull(message = "O campo horario é obrigatório!", groups = { CreateProcedimento.class, UpdateProcedimento.class })
+    @Future(message = "O procedimento deve ser agendado para uma data futura", groups = { CreateProcedimento.class, UpdateProcedimento.class})
     @Column(nullable = false)
     private LocalDateTime dataHora;
 
     @NotBlank(message = "O campo tipoExame é obrigatório!", groups = { CreateProcedimento.class, UpdateProcedimento.class })
-    @Column(nullable = false)
+    @Column(name = "tipo_exame", nullable = false)
     private String tipoExame;
 
     @Column(name = "status_procedimento")

@@ -1,5 +1,9 @@
 package com.gft.procedimento_service.models;
 
+import java.util.Arrays;
+
+import com.gft.procedimento_service.exceptions.ResourceNotFoundException;
+
 public enum TipoExame {
 
     SANGUE(Complexidade.BAIXA),
@@ -19,5 +23,12 @@ public enum TipoExame {
 
     public Complexidade getComplexidade() {
         return complexidade;
+    }
+
+    public static TipoExame fromNome(String nome) {
+        return Arrays.stream(values())
+                     .filter(e -> e.name().equalsIgnoreCase(nome))
+                     .findFirst()
+                     .orElseThrow(() -> new ResourceNotFoundException("Exame não encontrado. Nome: " + nome));
     }
 }

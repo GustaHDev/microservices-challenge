@@ -5,13 +5,14 @@ import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 
 import com.gft.clinica_service.models.Doenca;
-import com.gft.clinica_service.models.Sintoma;
 
 
 public interface DoencaRepository extends JpaRepository<Doenca, UUID> {
-    Optional<List<Doenca>> findBySintomas(List<Sintoma> sintomas);
+    @Query("SELECT DISTINCT d FROM Doenca d JOIN d.sintomas s WHERE s IN :sintomas")
+    Optional<List<Doenca>> findBySintomas(List<String> sintomas);
 
     Optional<List<Doenca>> findByNomeIn(List<String> nomes);
 }

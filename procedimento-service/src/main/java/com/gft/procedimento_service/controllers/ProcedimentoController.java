@@ -16,6 +16,10 @@ import com.gft.procedimento_service.models.OrigemProcedimento;
 import com.gft.procedimento_service.models.Procedimento;
 import com.gft.procedimento_service.services.ProcedimentoService;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -78,12 +82,6 @@ public class ProcedimentoController {
         return ResponseEntity.ok().body(procedimento);
     }
 
-    @Operation(summary = "Lista procedimentos", description = "Lista todos os procedimentos pelo horario")
-    @ApiResponses({
-            @ApiResponse(responseCode = "201", description = "Ok"),
-            @ApiResponse(responseCode = "404", description = "Procedimento não encontrado"),
-            @ApiResponse(responseCode = "500", description = "Erro inesperado")
-    })
     @Operation(summary = "Lista procedimentos", description = "Lista todos os procedimentos pelo horario")
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Ok"),

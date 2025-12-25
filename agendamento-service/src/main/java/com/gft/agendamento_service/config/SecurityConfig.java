@@ -17,21 +17,18 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
             .csrf(csrf -> csrf.disable())
-            
-            // 1. Garante que não guarde sessão (Stateless)
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             
-            // 2. Resolve o problema do "requestMatchers" não funcionar
             .authorizeHttpRequests(auth -> auth
-                // Usamos "new AntPathRequestMatcher" para forçar a comparação via String simples da URL
-                // Isso ignora a complexidade do DispatcherServlet
                 .requestMatchers(new AntPathRequestMatcher("/api/agendamento/cadastro/paciente/**")).permitAll()
-                
-                // Regra padrão
+                .requestMatchers(
+                "/v3/api-docs/**",
+                "/swagger-ui/**",
+                "/swagger-ui.html"
+            ).permitAll()
                 .anyRequest().authenticated()
             )
             
-            // 3. Impede aquele log de "Saved request to session" e retorna 401 direto se falhar
             .exceptionHandling(ex -> ex
                 .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED))
             )

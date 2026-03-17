@@ -62,13 +62,11 @@ The system is composed of **three main microservices**:
 Security is implemented using **Keycloak** with configured roles:
 
   -----------------------------------------------------------------------
-  Role | Permissions
-  ----------------------------------- -----------------------------------
-  USER | Can register and view only exams and consultations linked to their CPF
-
-  MEDICO | Can view patients and request complex exams
-
-  ADMIN | Full CRUD access across all services
+| Role | Permissions |
+| ----------------------------------- | ----------------------------------- |
+| USER | Can register and view only exams and consultations linked to their CPF |
+| MEDICO | Can view patients and request complex exams |
+| ADMIN | Full CRUD access across all services |
   -----------------------------------------------------------------------
 
 The **API Gateway** filters requests and authenticates via **Bearer Token**, preventing direct access to microservices without validation.
@@ -248,13 +246,11 @@ O sistema é composto por **três microsserviços principais**:
 Segurança implementada via **Keycloak** com roles configurados:
 
   -----------------------------------------------------------------------
-  Role | Permissões
-  ----------------------------------- -----------------------------------
-  USER | Pode cadastrar e visualizar apenas exames e consultas ligadas ao seu CPF
-
-  MEDICO | Pode visualizar pacientes e solicitar exames complexos
-
-  ADMIN | CRUD completo em todos os serviços
+| Role | Permissões |
+| ----------------------------------- | ----------------------------------- |
+| USER | Pode cadastrar e visualizar apenas exames e consultas ligadas ao seu CPF |
+| MEDICO | Pode visualizar pacientes e solicitar exames complexos |
+| ADMIN | CRUD completo em todos os serviços |
   -----------------------------------------------------------------------
 
 O **API Gateway** filtra chamadas e autentica via **Bearer Token**, impedindo acesso direto aos microserviços sem validação.
